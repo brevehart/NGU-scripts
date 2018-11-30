@@ -73,6 +73,8 @@ def speedrun(duration, f):
         if time.time() > start + 90 and not itopod_advance:
             f.adventure(itopod=True, itopodauto=True)
             itopod_advance = True
+        if time.time() > start + 105:
+            f.itopod_snipe(55)
     f.gold_diggers([9, 3, 5, 6, 12], True)
     f.nuke()
     time.sleep(2)
@@ -98,7 +100,7 @@ feature = Features()
 Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 400, 600)
 nav.menu("inventory")
 
-u = Upgrade(37500, 37500, 4, 4, 2)
+u = Upgrade(37500, 37500, 4, 4, 1)
 
 print(w.x, w.y)
 tracker = Tracker(3)
