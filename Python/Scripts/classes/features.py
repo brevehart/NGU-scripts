@@ -502,9 +502,12 @@ class Features(Navigation, Inputs):
             for target in targets:
                 self.click(ncon.NGU_PLUSX, ncon.NGU_PLUSY + target * 35)
 
+        self.click(600, 100)  # Click somewhere to move tooltip
+
         for target in targets:
             energy = 0
-            for x in range(198):
+            half_filled = False
+            for x in range(1, 199):
                 color = self.get_pixel_color(ncon.NGU_BAR_MINX + x,
                                              ncon.NGU_BAR_Y +
                                              ncon.NGU_BAR_OFFSETY * target,
@@ -513,11 +516,31 @@ class Features(Navigation, Inputs):
                     pixel_coefficient = x / 200
                     value_coefficient = overcap / pixel_coefficient
                     energy = (value_coefficient * value) - value
-                    #print(f"estimated energy to BB this NGU is {Decimal(energy):.2E}")
+                    #print(f"Found white pixel at {ncon.NGU_BAR_MINX + x}, {ncon.NGU_BAR_Y + ncon.NGU_BAR_OFFSETY * target }")
+                    #print(f"estimated energy to BB NGU: {target} is {Decimal(energy):.2E}")
                     break
+            if energy == 0:
+                continue
             self.input_box()
             self.send_string(str(int(energy)))
             self.click(ncon.NGU_PLUSX, ncon.NGU_PLUSY + target * 35)
+
+    def check_bb_ngu(self, target, magic=False, half_check=False):
+        if magic:
+            self.ngu_magic()
+        else:
+            self.menu("ngu")
+
+        for x in range(1, 199):
+            color = self.get_pixel_color(ncon.NGU_BAR_MINX + x,
+                                         ncon.NGU_BAR_Y +
+                                         ncon.NGU_BAR_OFFSETY * target,
+                                         )
+            if color == ncon.NGU_BAR_WHITE:
+                return False
+            if x >= 100 and half_check:  # if bar is half filled, pretend it's full
+                return True
+        return True
 
     def advanced_training(self, value):
         self.menu("advtraining")

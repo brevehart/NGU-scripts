@@ -43,6 +43,10 @@ def speedrun(duration, f):
     f.gold_diggers([5, 6, 8, 9], True)
     f.augments({"AE": 0.7, "ES": 0.3}, 3.2e10)
     f.wandoos(True)
+    time.sleep(10)
+    f.bb_ngu(3e9, [1, 2, 3, 4, 5, 6])
+    f.bb_ngu(1.5e10, [7])  # drop
+    f.bb_ngu(4e9, [1, 2], magic=True)
     while time.time() < end - 25:
         f.wandoos(True)
         f.gold_diggers([5, 6, 8, 9, 11])
@@ -55,8 +59,14 @@ def speedrun(duration, f):
                 #feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8])
                 #NGU_magic = int(f.remove_letters(f.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
                 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
-                f.bb_ngu(3e9, [1, 2, 3, 4, 5, 6, 7])
-                f.bb_ngu(4e9, [1, 2, 3], magic=True)
+                if not f.check_bb_ngu(7, half_check=True):
+                    f.bb_ngu(1.5e10, [7], recheck=True)
+                else:
+                    f.assign_ngu(1e12, [8])
+                if not f.check_bb_ngu(2, magic=True):
+                    f.bb_ngu(4e9, [2], magic=True, recheck=True)
+                else:
+                    f.assign_ngu(1e12, [3], magic=True)
             except ValueError:
                 print("couldn't assign e/m to NGUs")
             time.sleep(0.5)
@@ -88,7 +98,7 @@ feature = Features()
 Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 400, 600)
 nav.menu("inventory")
 
-u = Upgrade(37500, 37500, 2, 2, 3)
+u = Upgrade(37500, 37500, 4, 4, 2)
 
 print(w.x, w.y)
 tracker = Tracker(3)
