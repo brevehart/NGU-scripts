@@ -456,23 +456,24 @@ class Features(Navigation, Inputs):
                 self.click(ncon.DIG_ACTIVE[item]["x"],
                            ncon.DIG_ACTIVE[item]["y"])
 
-    def bb_ngu(self, value, targets, overcap=1, magic=False):
+    def bb_ngu(self, value, targets, overcap=1, magic=False, recheck=False):
         """Estimates the BB value of each supplied NGU.
 
         Keyword arguments:
         targets -- Array of NGU's to BB. Example: [1, 3, 4, 5, 6]
         magic -- Set to true if these are magic NGUs
+        recheck -- Set to True if you wish to skip adding initial energy
         """
         if magic:
             self.ngu_magic()
         else:
             self.menu("ngu")
 
-        self.input_box()
-        self.send_string(str(int(value)))
-
-        for target in targets:
-            self.click(ncon.NGU_PLUSX, ncon.NGU_PLUSY + target * 35)
+        if not recheck:
+            self.input_box()
+            self.send_string(str(int(value)))
+            for target in targets:
+                self.click(ncon.NGU_PLUSX, ncon.NGU_PLUSY + target * 35)
 
         for target in targets:
             energy = 0
@@ -482,7 +483,7 @@ class Features(Navigation, Inputs):
                                              ncon.NGU_BAR_OFFSETY * target,
                                              )
                 if color == ncon.NGU_BAR_WHITE:
-                    pixel_coefficient = x / 198
+                    pixel_coefficient = x / 200
                     value_coefficient = overcap / pixel_coefficient
                     energy = (value_coefficient * value) - value
                     #print(f"estimated energy to BB this NGU is {Decimal(energy):.2E}")

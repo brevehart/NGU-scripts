@@ -35,37 +35,39 @@ def speedrun(duration, f):
     time.sleep(4)
     f.loadout(2)  # Bar/power equimpent
     f.adventure(itopod=True, itopodauto=True)
-    f.time_machine(True)
-    f.augments({"AE": 0.7, "ES": 0.3}, 1.8e10)
+    f.time_machine(e=5e8, magic=True)
+    f.augments({"AE": 0.7, "ES": 0.3}, 2.2e10)
 
     f.blood_magic(8)
     f.boost_equipment()
-    f.gold_diggers([2, 5, 6, 8], True)
-    f.augments({"AE": 0.7, "ES": 0.3}, 1.5e10)
+    f.gold_diggers([5, 6, 8, 9], True)
+    f.augments({"AE": 0.7, "ES": 0.3}, 3.2e10)
     f.wandoos(True)
-    while time.time() < end - 20:
+    while time.time() < end - 25:
         f.wandoos(True)
-        f.gold_diggers([2, 5, 6, 8, 11])
+        f.gold_diggers([5, 6, 8, 9, 11])
         if time.time() > start + 40 and not blood_digger_active:
             blood_digger_active = True
             f.gold_diggers([11], True)
         if time.time () > start + 40:
             try:
-                NGU_energy = int(f.remove_letters(f.ocr(ncon.OCR_ENERGY_X1, ncon.OCR_ENERGY_Y1, ncon.OCR_ENERGY_X2, ncon.OCR_ENERGY_Y2)))
-                feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6])
-                NGU_magic = int(f.remove_letters(f.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
-                feature.assign_ngu(NGU_magic, [2], magic=True)
+                #NGU_energy = int(f.remove_letters(f.ocr(ncon.OCR_ENERGY_X1, ncon.OCR_ENERGY_Y1, ncon.OCR_ENERGY_X2, ncon.OCR_ENERGY_Y2)))
+                #feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8])
+                #NGU_magic = int(f.remove_letters(f.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
+                #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
+                f.bb_ngu(3e9, [1, 2, 3, 4, 5, 6, 7])
+                f.bb_ngu(4e9, [1, 2, 3], magic=True)
             except ValueError:
                 print("couldn't assign e/m to NGUs")
             time.sleep(0.5)
         if time.time() > start + 90 and not itopod_advance:
             f.adventure(itopod=True, itopodauto=True)
             itopod_advance = True
-    f.gold_diggers([2, 3, 5, 6, 12], True)
+    f.gold_diggers([9, 3, 5, 6, 12], True)
     f.nuke()
     time.sleep(2)
     f.fight()
-    f.pit()
+    f.pit(3)
     f.spin()
     f.save_check()
     tracker.progress()
@@ -93,13 +95,13 @@ tracker = Tracker(3)
 #c = Challenge(tracker)
 #print(c.check_challenge())
 
-
+#u.em()
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 while True:  # main loop
     #feature.boost_equipment()
     #feature.ygg()
-    #feature.snipe(0, 120, bosses=False)
+    #feature.itopod_snipe(180)
 
     #time.sleep(120)
     #c.start_challenge(9)
