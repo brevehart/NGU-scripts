@@ -73,8 +73,7 @@ def speedrun(duration, f):
         if time.time() > start + 90 and not itopod_advance:
             f.adventure(itopod=True, itopodauto=True)
             itopod_advance = True
-        if time.time() > start + 105:
-            f.itopod_snipe(55)
+
     f.gold_diggers([9, 3, 5, 6, 12], True)
     f.nuke()
     time.sleep(2)
@@ -111,10 +110,13 @@ tracker = Tracker(3)
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 while True:  # main loop
-    #feature.boost_equipment()
-    #feature.ygg()
-    #feature.itopod_snipe(180)
-
+    feature.boost_equipment()
+    feature.merge_inventory(12)
+    feature.boost_inventory(7)
+    
+    feature.ygg()
+    feature.itopod_snipe(180)
+    #feature.snipe(0, 300, bosses=False)
     #time.sleep(120)
     #c.start_challenge(9)
-    speedrun(3, feature)
+    #speedrun(3, feature)
