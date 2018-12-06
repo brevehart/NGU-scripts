@@ -5,7 +5,7 @@ from challenges.basic import Basic
 from challenges.level import Level
 
 # Helper classes
-from classes.challenge import Challenge
+from classes.discord import Discord
 from classes.features import Features
 from classes.inputs import Inputs
 from classes.navigation import Navigation
@@ -36,18 +36,18 @@ def speedrun(duration, f):
     f.loadout(2)  # Bar/power equimpent
     f.adventure(itopod=True, itopodauto=True)
     f.time_machine(e=5e8, magic=True)
-    f.augments({"AE": 0.7, "ES": 0.3}, 2.2e10)
+    f.augments({"AE": 0.75, "ES": 0.25}, 2.2e10)
 
     f.blood_magic(8)
     f.boost_equipment()
     f.gold_diggers([5, 6, 8, 9], True)
-    f.augments({"AE": 0.7, "ES": 0.3}, 3.2e10)
+    f.augments({"AE": 0.75, "ES": 0.25}, 1e11)
     f.wandoos(True)
-    time.sleep(10)
     f.bb_ngu(3e9, [1, 2, 3, 4, 5, 6])
-    f.bb_ngu(1.5e10, [7])  # drop
-    f.bb_ngu(4e9, [1, 2], magic=True)
-    while time.time() < end - 25:
+    f.bb_ngu(5e10, [7])  # drop
+    f.bb_ngu(4e9, [1], magic=True)
+    f.bb_ngu(1e10, [2, 3, 4], magic=True)
+    while time.time() < end - 20:
         f.wandoos(True)
         f.gold_diggers([5, 6, 8, 9, 11])
         if time.time() > start + 40 and not blood_digger_active:
@@ -59,14 +59,14 @@ def speedrun(duration, f):
                 #feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8])
                 #NGU_magic = int(f.remove_letters(f.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
                 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
-                if not f.check_bb_ngu(7, half_check=True):
-                    f.bb_ngu(1.5e10, [7], recheck=True)
+                if not f.check_bb_ngu(8):
+                    f.bb_ngu(2.5e10, [8], recheck=True)
                 else:
                     f.assign_ngu(1e12, [8])
-                if not f.check_bb_ngu(2, magic=True):
-                    f.bb_ngu(4e9, [2], magic=True, recheck=True)
+                if not f.check_bb_ngu(4, magic=True):
+                    f.bb_ngu(4e10, [4], magic=True, recheck=True)
                 else:
-                    f.assign_ngu(1e12, [3], magic=True)
+                    f.assign_ngu(1e12, [5], magic=True)
             except ValueError:
                 print("couldn't assign e/m to NGUs")
             time.sleep(0.5)
@@ -96,7 +96,7 @@ i = Inputs()
 nav = Navigation()
 feature = Features()
 
-Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 400, 600)
+Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 100, 100, 400, 600)
 nav.menu("inventory")
 
 u = Upgrade(37500, 37500, 4, 4, 1)
@@ -110,13 +110,14 @@ tracker = Tracker(3)
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 while True:  # main loop
-    feature.boost_equipment()
-    feature.merge_inventory(12)
-    feature.boost_inventory(7)
+    #feature.boost_equipment()
+    #feature.merge_inventory(12)
+    #feature.boost_inventory(7)
     
-    feature.ygg()
-    feature.itopod_snipe(180)
+    #feature.ygg()
+    #feature.itopod_snipe(180)
+    #Discord.send_message("Still going strong", 0)
     #feature.snipe(0, 300, bosses=False)
     #time.sleep(120)
     #c.start_challenge(9)
-    #speedrun(3, feature)
+    speedrun(3, feature)

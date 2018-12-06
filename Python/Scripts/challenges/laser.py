@@ -1,4 +1,4 @@
-"""Contains functions for running a basic challenge."""
+"""Contains functions for running a laswer sword challenge."""
 from classes.features import Features
 from classes.inputs import Inputs
 import ngucon as ncon
@@ -6,19 +6,10 @@ import time
 
 
 class Laser(Features, Inputs):
-    """Contains functions for running a basic challenge.
-
-    This script requires you to have a number high enough to do a normal
-    3 minute rebirth.
-    """
+    """Contains functions for running a laser sword challenge."""
 
     def speedrun(self):
-        """Start a speedrun.
-
-        Keyword arguments
-        duration -- duration in minutes to run
-        f -- feature object
-        """
+        """Start a speedrun."""
         duration = 3
         self.do_rebirth()
         start = time.time()
