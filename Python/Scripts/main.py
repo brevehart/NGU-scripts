@@ -6,6 +6,7 @@ from challenges.level import Level
 
 # Helper classes
 from classes.discord import Discord
+from classes.challenge import Challenge
 from classes.features import Features
 from classes.inputs import Inputs
 from classes.navigation import Navigation
@@ -93,29 +94,27 @@ i = Inputs()
 nav = Navigation()
 feature = Features()
 
-Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 100, 100, 400, 600)
-nav.menu("inventory")
+Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 1000, 1000)
 
+nav.menu("inventory")
 u = Upgrade(37500, 37500, 4, 4, 1)
 
 print(w.x, w.y)
-tracker = Tracker(3)
-#c = Challenge(tracker)
+#tracker = Tracker(3)
+c = Challenge()
 #print(c.check_challenge())
+
 
 #u.em()
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
-NGU_energy = int(feature.remove_letters(feature.ocr(ncon.OCR_ENERGY_X1, ncon.OCR_ENERGY_Y1, ncon.OCR_ENERGY_X2, ncon.OCR_ENERGY_Y2)))
-NGU_magic = int(feature.remove_letters(feature.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
-print(NGU_magic, NGU_energy)
 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
-#while True:  # main loop
+while True:  # main loop
     #feature.boost_equipment()
     #feature.merge_inventory(12)
-    #feature.boost_inventory(7)
+    feature.boost_inventory(7)
     
-    #feature.ygg()
-    #feature.itopod_snipe(180)
+    feature.ygg()
+    feature.itopod_snipe(180)
     #Discord.send_message("Still going strong", 0)
     #speedrun(3, feature)

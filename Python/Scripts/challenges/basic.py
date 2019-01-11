@@ -9,9 +9,6 @@ import time
 class Basic(Features):
     """Contains functions for running a basic challenge."""
 
-    def __init__(self, tracker):
-        self.tracker = tracker
-
     def first_rebirth(self):
         """Procedure for first rebirth after number reset."""
         end = time.time() + 3 * 60
@@ -75,54 +72,42 @@ class Basic(Features):
             time.sleep(5)
 
     def speedrun(self, duration, target):
-        """Start a speedrun.
-
-        Keyword arguments
-        duration -- duration in minutes to run
-        f -- feature object
-        """
         self.do_rebirth()
         start = time.time()
-        end = time.time() + (duration * 60)
+        end = time.time() + (duration * 60) + 1
         blood_digger_active = False
+        itopod_advance = False
         self.nuke(125)
-        time.sleep(2)
         self.loadout(1)  # Gold drop equipment
         self.adventure(highest=True)
-        time.sleep(7)
+        time.sleep(4)
         self.loadout(2)  # Bar/power equimpent
         self.adventure(itopod=True, itopodauto=True)
-        self.time_machine(True)
-        self.augments({"EB": 0.7, "CS": 0.3}, 4.5e9)
-
+        self.time_machine(e=5e8, magic=True)
+        self.augments({"AE": 0.75, "ES": 0.25}, 8e10)
         self.blood_magic(8)
-        self.boost_equipment()
+        self.gold_diggers([4, 5, 6, 8, 9, 11, 12], True)
         self.wandoos(True)
-        self.gold_diggers([2, 5, 8, 9], True)
-
+        self.bb_ngu(3e9, [1, 2, 3, 4, 5, 6])
+        self.bb_ngu(5e10, [7])  # drop
+        self.bb_ngu(1.5e11, [8, 9], overcap=1.05)  # Magic NGU
+        self.bb_ngu(4e9, [1], magic=True)
+        self.bb_ngu(1e10, [2, 3, 4], magic=True, overcap=1.05)
+        self.bb_ngu(1e11, [5], magic=True)  # TM
+        self.bb_ngu(2e11, [6, 7], magic=True, overcap=1.05)  # Energy NGU
         while time.time() < end - 20:
             self.wandoos(True)
-            self.gold_diggers([2, 5, 8, 9, 11])
-            if time.time() > start + 60 and not blood_digger_active:
-                blood_digger_active = True
-                self.gold_diggers([11], True)
-            if time.time() > start + 90:
-                try:
-                    NGU_energy = int(self.remove_letters(self.ocr(ncon.OCR_ENERGY_X1,ncon.OCR_ENERGY_Y1,ncon.OCR_ENERGY_X2,ncon.OCR_ENERGY_Y2)))
-                    self.assign_ngu(NGU_energy, [1, 2, 4, 5, 6])
-                    NGU_magic = int(self.remove_letters(self.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
-                    self.assign_ngu(NGU_magic, [2], magic=True)
-                except ValueError:
-                    print("couldn't assign e/m to NGUs")
-                time.sleep(0.5)
-        self.gold_diggers([2, 3, 5, 9, 12], True)
+            self.gold_diggers([4, 5, 6, 8, 9, 11, 12])
+            self.nuke()
+        self.gold_diggers([9, 3, 5, 6], True)
         self.nuke()
         time.sleep(2)
         self.fight()
-        self.pit()
+        self.pit(3)
         self.spin()
-        self.tracker.progress()
-        #tracker.adjustxp()
+        self.save_check()
+        while time.time() < end:
+            time.sleep(0.1)
         while time.time() < end:
             try:
                 """If current rebirth is scheduled for more than 3 minutes and
