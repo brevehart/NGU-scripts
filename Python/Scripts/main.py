@@ -97,24 +97,18 @@ feature = Features()
 Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 1000, 1000)
 
 nav.menu("inventory")
-u = Upgrade(37500, 37500, 4, 4, 1)
+u = Upgrade(37500, 37500, 2, 2, 1)
 
-print(w.x, w.y)
-#tracker = Tracker(3)
-c = Challenge()
-#print(c.check_challenge())
-
-
-#u.em()
+u.em()
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
 while True:  # main loop
-    #feature.boost_equipment()
+    feature.boost_equipment()
     #feature.merge_inventory(12)
-    feature.boost_inventory(7)
-    
+    #feature.boost_inventory(6)
     feature.ygg()
+    feature.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     feature.itopod_snipe(180)
     #Discord.send_message("Still going strong", 0)
     #speedrun(3, feature)
