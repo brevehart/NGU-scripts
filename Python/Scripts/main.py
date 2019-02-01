@@ -98,7 +98,7 @@ Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 1000, 1000)
 
 nav.menu("inventory")
 u = Upgrade(37500, 37500, 2, 2, 1)
-
+print(f"Top left found at: {w.x}, {w.y}")
 u.em()
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
