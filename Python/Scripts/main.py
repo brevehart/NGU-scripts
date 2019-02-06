@@ -88,7 +88,6 @@ def speedrun(duration, f):
 
     return
 
-
 w = Window()
 i = Inputs()
 nav = Navigation()
@@ -100,15 +99,20 @@ nav.menu("inventory")
 u = Upgrade(37500, 37500, 2, 2, 1)
 print(f"Top left found at: {w.x}, {w.y}")
 u.em()
+#print(feature.get_idle_cap(magic=False))
+#print(feature.get_idle_cap(magic=True))
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
+i.get_bitmap()
+
 while True:  # main loop
-    feature.boost_equipment()
+    
     #feature.merge_inventory(12)
-    #feature.boost_inventory(6)
+    feature.boost_inventory(8)
+    feature.boost_equipment()
     feature.ygg()
     feature.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    feature.itopod_snipe(180)
+    feature.itopod_snipe(600)
     #Discord.send_message("Still going strong", 0)
     #speedrun(3, feature)

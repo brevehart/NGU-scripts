@@ -91,7 +91,7 @@ class Inputs():
         save_dc.DeleteDC()
         mfc_dc.DeleteDC()
         win32gui.ReleaseDC(window.id, hwnd_dc)
-        # bmp.save("asdf.png")
+        # bmp.save("unaware.png")
         return bmp
 
     def pixel_search(self, color, x_start, y_start, x_end, y_end):
@@ -175,6 +175,19 @@ class Inputs():
     def remove_letters(self, s):
         """Remove all non digit characters from string."""
         return re.sub('[^0-9]', '', s)
+
+    def get_idle_cap(self, magic=False):
+        """Get the available idle energy or magic."""
+        try:
+            if magic:
+                res = self.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)
+            else:
+                res = self.ocr(ncon.OCR_ENERGY_X1, ncon.OCR_ENERGY_Y1, ncon.OCR_ENERGY_X2, ncon.OCR_ENERGY_Y2)
+            match = re.search(".*(\d+\.\d+E\+\d+)", res)
+            if match:
+                return int(float(match.group(1)))
+        except ValueError:
+            print("Couldn't get idle e/m")
 
     def rgb_to_hex(self, tup):
         """Convert RGB value to HEX."""
