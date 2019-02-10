@@ -104,14 +104,14 @@ u.em()
 #feature.bb_ngu(4e8, [1, 2, 3, 4, 5, 6, 7, 8, 9], 1.05)
 #feature.speedrun_bloodpill()
 #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
-i.get_bitmap()
+#i.get_bitmap()
 
 while True:  # main loop
     
     #feature.merge_inventory(12)
-    feature.boost_inventory(8)
+    feature.boost_inventory(3)
     feature.boost_equipment()
-    feature.ygg()
+    #feature.ygg()
     feature.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     feature.itopod_snipe(600)
     #Discord.send_message("Still going strong", 0)
