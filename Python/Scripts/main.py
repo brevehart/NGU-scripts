@@ -14,7 +14,7 @@ from classes.stats import Stats, EstimateRate, Tracker
 from classes.upgrade import Upgrade
 from classes.window import Window
 
-import ngucon as ncon
+import coordinates as coords
 import time
 
 
@@ -39,24 +39,20 @@ def speedrun(duration, f):
     f.time_machine(e=5e8, magic=True)
     f.augments({"AE": 0.75, "ES": 0.25}, 8e10)
     f.blood_magic(8)
-    f.gold_diggers([4, 5, 6, 8, 9, 11, 12], True)
+    f.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     f.wandoos(True)
     f.bb_ngu(3e9, [1, 2, 3, 4, 5, 6])
     f.bb_ngu(5e10, [7])  # drop
-    f.bb_ngu(1.5e11, [8])  # Magic NGU
+    f.bb_ngu(1.5e11, [8, 9])  # Magic NGU/PP
     f.bb_ngu(4e9, [1], magic=True)
     f.bb_ngu(1e10, [2, 3, 4], magic=True)
     f.bb_ngu(1e11, [5], magic=True)  # TM
-    f.bb_ngu(1e11, [6], magic=True)  # Energy NGU
+    f.bb_ngu(1e11, [6, 7], magic=True)  # Energy NGU
     while time.time() < end - 20:
         f.wandoos(True)
-        f.gold_diggers([4, 5, 6, 8, 9, 11, 12])
+        f.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
         if time.time() > start + 40:
             try:
-                #NGU_energy = int(f.remove_letters(f.ocr(ncon.OCR_ENERGY_X1, ncon.OCR_ENERGY_Y1, ncon.OCR_ENERGY_X2, ncon.OCR_ENERGY_Y2)))
-                #feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8])
-                #NGU_magic = int(f.remove_letters(f.ocr(ncon.OCR_MAGIC_X1, ncon.OCR_MAGIC_Y1, ncon.OCR_MAGIC_X2, ncon.OCR_MAGIC_Y2)))
-                #feature.assign_ngu(NGU_magic, [2, 3, 4], magic=True)
                 if not f.check_bb_ngu(8):
                     f.bb_ngu(1e11, [9], recheck=True)
                 else:
@@ -72,7 +68,6 @@ def speedrun(duration, f):
             f.adventure(itopod=True, itopodauto=True)
             itopod_advance = True
 
-    f.gold_diggers([9, 3, 5, 6], True)
     f.nuke()
     time.sleep(2)
     f.fight()
@@ -93,7 +88,7 @@ i = Inputs()
 nav = Navigation()
 feature = Features()
 
-Window.x, Window.y = i.pixel_search(ncon.TOP_LEFT_COLOR, 0, 0, 1000, 1000)
+Window.x, Window.y = i.pixel_search(coords.TOP_LEFT_COLOR, 0, 0, 1000, 1000)
 
 nav.menu("inventory")
 u = Upgrade(37500, 37500, 2, 2, 1)
