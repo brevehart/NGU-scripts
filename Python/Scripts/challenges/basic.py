@@ -1,10 +1,8 @@
 """Contains functions for running a basic challenge."""
 from classes.features import Features
-from classes.stats import Tracker
-import ngucon as ncon
+import coordinates as ncon
 import usersettings as userset
 import time
-
 
 class Basic(Features):
     """Contains functions for running a basic challenge."""
@@ -31,8 +29,7 @@ class Basic(Features):
             time.sleep(2)
             self.fight()
 
-            tm_color = self.get_pixel_color(ncon.TMLOCKEDX, ncon.TMLOCKEDY)
-            if tm_color != ncon.TMLOCKEDCOLOR:
+            if not self.check_pixel_color(*ncon.COLOR_TM_LOCKED):
                 self.send_string("r")
                 self.send_string("t")
                 self.time_machine(True)
@@ -53,8 +50,7 @@ class Basic(Features):
             self.gold_diggers(diggers)
             time.sleep(5)
 
-            bm_color = self.get_pixel_color(ncon.BMLOCKEDX, ncon.BMLOCKEDY)
-            if bm_color != ncon.BMLOCKEDCOLOR:
+            if not self.check_pixel_color(*ncon.COLOR_BM_LOCKED):
                 self.menu("bloodmagic")
                 time.sleep(0.2)
                 self.send_string("t")
@@ -128,16 +124,6 @@ class Basic(Features):
             except ValueError:
                 print("OCR couldn't find current boss")
         return
-
-    def check_challenge(self):
-        """Check if a challenge is active."""
-        self.rebirth()
-        self.click(ncon.CHALLENGEBUTTONX, ncon.CHALLENGEBUTTONY)
-        time.sleep(userset.LONG_SLEEP)
-        color = self.get_pixel_color(ncon.CHALLENGEACTIVEX,
-                                     ncon.CHALLENGEACTIVEY)
-
-        return True if color == ncon.CHALLENGEACTIVECOLOR else False
 
     def basic(self, target):
         """Defeat target boss."""
