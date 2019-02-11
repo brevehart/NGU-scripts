@@ -51,23 +51,9 @@ def speedrun(duration, f):
     while time.time() < end - 20:
         f.wandoos(True)
         f.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-        if time.time() > start + 40:
-            try:
-                if not f.check_bb_ngu(8):
-                    f.bb_ngu(1e11, [9], recheck=True)
-                else:
-                    f.assign_ngu(1e12, [8])
-                if not f.check_bb_ngu(5, magic=True):
-                    f.bb_ngu(1e11, [5], magic=True, recheck=True)
-                else:
-                    f.assign_ngu(1e12, [6], magic=True)
-            except ValueError:
-                print("couldn't assign e/m to NGUs")
-            time.sleep(0.5)
-        if time.time() > start + 90 and not itopod_advance:
+        if time.time() > start + 90 and not itopod_advance: # delete this if you have ITOPOD floor changer
             f.adventure(itopod=True, itopodauto=True)
             itopod_advance = True
-
     f.nuke()
     time.sleep(2)
     f.fight()
@@ -77,7 +63,6 @@ def speedrun(duration, f):
     tracker.progress()
     u.em()
     tracker.adjustxp()
-    #f.speedrun_bloodpill()
     while time.time() < end:
         time.sleep(0.1)
 
