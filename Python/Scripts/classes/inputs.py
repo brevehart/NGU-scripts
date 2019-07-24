@@ -188,7 +188,7 @@ class Inputs():
         # Bitmaps are created with a 8px border
         bmp = bmp.crop((x_start + 8, y_start + 8, x_end + 8, y_end + 8))
         *_, right, lower = bmp.getbbox()
-        bmp = bmp.resize((right*3, lower*3), image.BICUBIC)  # Resize image
+        bmp = bmp.resize((right * 3, lower * 3), image.BICUBIC)  # Resize image
         bmp = bmp.filter(ImageFilter.SHARPEN)  # Sharpen image for better OCR
         if debug:
             bmp.save("debug_ocr.png")
@@ -209,7 +209,7 @@ class Inputs():
 
         return self.rgb_to_hex((r, g, b))
 
-    def check_pixel_color(self, x, y, checks):
+    def check_pixel_color(self, x, y, checks, variance=0):
         color = self.get_pixel_color(x, y)
         if isinstance(checks, list):
             for check in checks:
@@ -226,6 +226,11 @@ class Inputs():
         """Convert RGB value to HEX."""
         return '%02x%02x%02x'.upper() % (tup[0], tup[1], tup[2])
 
+    def hex_to_rgb(self, hex):
+        """Convert RGB value to HEX."""
+        hex = int(hex, base=16)
+        return (hex >> 16 & 0xff, hex >> 8 & 0xff, hex & 0xff)
+
     def get_file_path(self, directory, file):
         """Get the absolute path for a file."""
         working = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -233,7 +238,7 @@ class Inputs():
         return path
 
     def ocr_number(self, x_1, y_1, x_2, y_2):
-        """Remove all non-digits."""
+        """Remove all non-digits and cast to int."""
         return int(self.remove_letters(self.ocr(x_1, y_1, x_2, y_2)))
 
     def ocr_notation(self, x_1, y_1, x_2, y_2):

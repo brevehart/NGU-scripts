@@ -35,7 +35,7 @@ class Features(Navigation, Inputs):
         self.menu("inventory")
         for slot in coords.EQUIPMENT_SLOTS:
             if (slot == "cube"):
-                self.click(*coords.EQUIPMENT_SLOTS[slot], "right")
+                # self.click(*coords.EQUIPMENT_SLOTS[slot], "right") # use boost_cube for cube
                 return
             self.click(*coords.EQUIPMENT_SLOTS[slot])
             self.send_string("a")
@@ -44,6 +44,20 @@ class Features(Navigation, Inputs):
         """Boost cube."""
         self.menu("inventory")
         self.click(*self.equipment["cube"], "right")
+
+    def merge_boost(self, invmerge=12, invboost=6):
+        """Merges and boosts equipment and some inventory slots. Also, boosts cube.
+
+           Keyword arguments
+           invmerge: number of inventory slots to merge
+           invboost: number of inventory slots to boost
+        """
+        self.menu("inventory")
+        self.merge_equipment()
+        self.boost_equipment()
+        self.merge_inventory(invmerge)
+        self.boost_inventory(invboost)
+        self.boost_cube()
 
     def get_current_boss(self):
         """Go to fight and read current boss number."""
@@ -54,6 +68,7 @@ class Features(Navigation, Inputs):
     def nuke(self, boss=None):
         """Navigate to Fight Boss and Nuke or Fast Fight."""
         self.menu("fight")
+        time.sleep(userset.MEDIUM_SLEEP)
         if boss:
             for i in range(boss):
                 self.click(*coords.FIGHT, fast=True)
@@ -74,7 +89,7 @@ class Features(Navigation, Inputs):
                     current_boss = 1
                 x += 1
                 if x > 7:  # Safeguard if number is too low to reach target boss, otherwise we get stuck here
-                    print("Couldn't reach the target boss, something probably went wrong the last rebirth.")
+                    print(f"Couldn't reach the target boss ({current_boss} of {boss}), something probably went wrong the last rebirth.")
                     break
         else:
             self.click(*coords.NUKE)
@@ -110,6 +125,22 @@ class Features(Navigation, Inputs):
         self.click(*coords.SPIN_MENU)
         self.click(*coords.SPIN)
 
+    def get_adv_zone(self, openAdv=True):
+        """Get current adventure zone.
+
+           Keyword arguments
+           openAdv -- if True (default), opens adventure menu before determining zone
+        """
+        if openAdv:
+            self.menu("adventure")
+            self.click(625, 500)  # click somewhere to move tooltip
+        zone = self.ocr(*coords.OCR_ADV_ZONE)
+        # print(zone)
+        zone = zone.split("(")[0].strip()  # name is everything before first '('
+        # print(zone)
+        # print(zone.lower())
+        return zone
+
     def adventure(self, zone=0, highest=True, itopod=None, itopodauto=False):
         """Go to adventure zone to idle.
 
@@ -140,7 +171,7 @@ class Features(Navigation, Inputs):
             self.send_string(str(itopod))
             self.click(*coords.ITOPOD_ENTER)
             return
-        if highest:
+        if highest or zone >= len(coords.QUESTING_ZONES):
             self.current_adventure_zone = 0
             self.click(*coords.RIGHT_ARROW, button="right")
             return
@@ -167,7 +198,7 @@ class Features(Navigation, Inputs):
                   In addition it will return after killing one enemy.
         """
         self.menu("adventure")
-        if highest:
+        if highest or zone >= len(coords.QUESTING_ZONES):
             self.click(*coords.LEFT_ARROW, button="right")
             self.click(*coords.RIGHT_ARROW, button="right")
         elif zone > 0 and zone != self.current_adventure_zone:
@@ -455,6 +486,7 @@ class Features(Navigation, Inputs):
         2 - MacGuffin alpha
         3 - MacGuffin beta
         """
+        print(self.get_pixel_color(*coords.COLOR_SPELL_READY))
         if self.check_pixel_color(*coords.COLOR_SPELL_READY):
             self.spells()
             self.click(*coords.BM_PILL, button="right")
@@ -582,7 +614,7 @@ class Features(Navigation, Inputs):
         """
         self.menu("digger")
         for i in targets:
-            page = ((i-1)//4)
+            page = ((i - 1) // 4)
             item = i - (page * 4)
             self.click(*coords.DIG_PAGE[page])
             if deactivate:
@@ -707,7 +739,7 @@ class Features(Navigation, Inputs):
         tough = self.ocr(*coords.OCR_ADV_TOUGH, bmp=bmp)
 
         if (float(power) > coords.TITAN_PT[target]["p"] and
-           float(tough) > coords.TITAN_PT[target]["t"]):
+                float(tough) > coords.TITAN_PT[target]["t"]):
             return True
 
         else:
@@ -715,6 +747,15 @@ class Features(Navigation, Inputs):
                   f"/{Decimal(coords.TITAN_PT[target]['t'] - float(tough)):.2E} P/T"
                   f" to kill {target}")
             return False
+
+    def titans_available(self):
+        """Returns a list of all titans available to fight."""
+        self.menu("adventure")  # click to get tooltip, maybe we can hover instead?
+        titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
+        print(titans)
+        res = re.findall(r'^\s*(\w+)\s+SPAWN\s+READY$', titans, flags=re.M)
+        print(res)
+        return res
 
     def kill_titan(self, target):
         """Attempt to kill the target titan.
@@ -725,6 +766,7 @@ class Features(Navigation, Inputs):
                   "BEAST4"]
         """
         self.menu("adventure")
+        self.click(625, 500)  # click somewhere to move tooltip
         if self.check_pixel_color(*coords.IS_IDLE):
             self.click(*coords.ABILITY_IDLE_MODE)
 
@@ -737,29 +779,37 @@ class Features(Navigation, Inputs):
         available = self.ocr(*coords.OCR_ADV_TITAN)
 
         if "titan" in available.lower():
-            time.sleep(1.5)  # Make sure titans spawn, otherwise loop breaks
-            queue = deque(self.get_ability_queue())
-            while self.check_pixel_color(*coords.IS_ENEMY_ALIVE):
+            while self.check_pixel_color(*coords.IS_DEAD):
+                # print(self.get_pixel_color(*coords.HEALTH))
+                time.sleep(0.2)  # Make sure titans spawn, otherwise loop breaks
+
+            # queue = deque(self.get_ability_queue())
+            queue = deque(self.get_ability_combo())
+            print(queue)
+            while not (self.check_pixel_color(*coords.IS_DEAD)):
+                # print(self.get_pixel_color(*coords.HEALTH))
                 if len(queue) == 0:
-                    print("NEW QUEUE")
-                    queue = deque(self.get_ability_queue())
+                    print("NEW COMBO")
+                    # queue = deque(self.get_ability_queue())
+                    queue = deque(self.get_ability_combo())
                     print(queue)
 
                 ability = queue.popleft()
-                print(f"using ability {ability}")
-                if ability <= 4:
-                    x = coords.ABILITY_ROW1X + ability * coords.ABILITY_OFFSETX
+                print(f"using ability {ability}: {coords.ABILITY_NAMES[ability]}")
+                if ability <= 5:
+                    x = coords.ABILITY_ANCHOR_PIXEL.x + ability * coords.ABILITY_OFFSETX
                     y = coords.ABILITY_ROW1Y
 
-                if ability >= 5 and ability <= 10:
-                    x = coords.ABILITY_ROW2X + (ability - 5) * coords.ABILITY_OFFSETX
+                if ability > 5 and ability <= 11:
+                    x = coords.ABILITY_ROW2X + (ability - 6) * coords.ABILITY_OFFSETX
                     y = coords.ABILITY_ROW2Y
 
-                if ability > 10:
-                    x = coords.ABILITY_ROW3X + (ability - 11) * coords.ABILITY_OFFSETX
+                if ability > 11:
+                    x = coords.ABILITY_ROW3X + (ability - 12) * coords.ABILITY_OFFSETX
                     y = coords.ABILITY_ROW3Y
 
                 self.click(x, y)
+                self.click(625, 500)  # click somewhere to move tooltip
                 time.sleep(userset.LONG_SLEEP)
                 color = self.get_pixel_color(coords.ABILITY_ROW1X,
                                              coords.ABILITY_ROW1Y)
@@ -769,6 +819,9 @@ class Features(Navigation, Inputs):
                     color = self.get_pixel_color(coords.ABILITY_ROW1X,
                                                  coords.ABILITY_ROW1Y)
 
+        print("Titan defeated or we were")  # could check zone to determine which
+
+    # deprecated, use get_ability_combo instead
     def get_ability_queue(self):
         """Return a queue of usable abilities."""
         ready = []
@@ -785,6 +838,7 @@ class Features(Navigation, Inputs):
             if i >= 5 and i <= 10:
                 x = coords.ABILITY_ROW2X + (i - 5) * coords.ABILITY_OFFSETX
                 y = coords.ABILITY_ROW2Y
+                color = self.get_pixel_color(x, y)
                 if color == coords.ABILITY_ROW2_READY_COLOR:
                     ready.append(i)
             if i > 10:
@@ -815,6 +869,88 @@ class Features(Navigation, Inputs):
         # If nothing is ready, return a regular attack
         if len(queue) == 0:
             queue.append(0)
+        return queue
+
+    def get_ability_combo(self):
+        """Gives the highest priority combo of currently usable abilities.
+
+           Priorities:
+           Paralyze (charge first, can we detect paralysis?)
+           Defense (Ultimate -> Defensive -> Block)
+           Healing
+           Damage (Buffs -> Charge -> best attack)
+        """
+        ready = []
+        queue = []
+        # print("Creating ability combo")
+        # Add all abilities that are ready to the ready array
+        for i in range(1, 14):  # skip idle attack
+            x = coords.ABILITY_ANCHOR_PIXEL.x
+            y = coords.ABILITY_ANCHOR_PIXEL.y
+            if i <= 5:
+                x += i * coords.ABILITY_OFFSETX
+                y += 0
+                color = self.get_pixel_color(x, y)
+                if color == coords.ABILITY_ROW1_READY_COLOR:
+                    ready.append(i)
+            elif i > 5 and i <= 11:
+                x += (i - 6) * coords.ABILITY_OFFSETX
+                y += coords.ABILITY_OFFSETY
+                color = self.get_pixel_color(x, y)
+                if color == coords.ABILITY_ROW2_READY_COLOR:
+                    ready.append(i)
+            elif i > 11:
+                x += (i - 12) * coords.ABILITY_OFFSETX
+                y += coords.ABILITY_OFFSETY * 2
+                color = self.get_pixel_color(x, y)
+                if color == coords.ABILITY_ROW3_READY_COLOR:
+                    ready.append(i)
+            # print(f"i: {i}, color: {color}, x: {x+coords.TX}, y: {y+coords.TY}")
+
+        # print("Available abilities")
+        # print(ready)
+
+        # apply best defense if no defense active
+        ult_buff = self.check_pixel_color(*coords.IS_ACTIVE_ULTIMATE_BUFF)
+        # print(f"Ult buff active: {ult_buff}")
+        if not (self.check_pixel_color(*coords.IS_ACTIVE_DEFENSIVE_BUFF) or ult_buff):
+            # print("Needs defense")
+            defenses = [11, 7, 6, 3]  # ultimate buff, defensive buff, block, parry
+            for d in defenses:
+                if d in ready:
+                    queue.append(d)
+                    return queue  # priority satisfied
+
+        # heal if we need to heal
+        if self.check_pixel_color(*coords.PLAYER_HEAL_THRESHOLD):
+            # print("Needs healing.")
+            if 13 in ready:  # hyper regen
+                queue.append(13)
+                return queue  # priority satisfied
+            elif 8 in ready:  # heal
+                queue.append(8)
+                return queue  # priority satisfied
+
+        # now for attack combos
+        # print("Attacking")
+        # use offensive buff if ultimate buff is active
+        if ult_buff and 9 in ready:
+            queue.append(9)
+
+        # piercing or ultimate attacks with charge if available
+        # or strong attack without charge
+        attacks = [5, 4, 2]  # ult, pierce, strong
+        for a in attacks:
+            if a in ready:
+                if a > 2:
+                    if 10 in ready:  # charge
+                        queue.append(10)
+                queue.append(a)
+                return queue  # priority satisfied
+
+        # If nothing is ready, return a regular attack
+        if len(queue) == 0:
+            queue.append(1)
         return queue
 
     def save_check(self):
@@ -1108,6 +1244,12 @@ class Features(Navigation, Inputs):
             timestamp = time.strptime(f"{hours}:{minutes}:{seconds}", "%H:%M:%S")
         return Rebirth_time(days, timestamp)
 
+    def rebirth_time_to_sec(self, rebirth_time):
+        """Converts rebirth_time object to seconds."""
+        ts = rebirth_time.timestamp
+        secs = ((rebirth_time.days * 24 + ts.tm_hour) * 60 + ts.tm_min) * 60 + ts.tm_sec
+        return secs
+
     def eat_muffin(self, buy=False):
         """Eat a MacGuffin Muffin if it's not active.
 
@@ -1137,11 +1279,32 @@ class Features(Navigation, Inputs):
 
     def hacks(self, targets=[1, 2, 3, 4, 5, 6, 7, 8], value=1e12):
         """Activate hacks."""
+        self.menu("hacks")
         self.input_box()
         self.send_string(value // len(targets))
-        self.menu("hacks")
         for i in targets:
-            page = ((i-1)//8)
+            page = ((i - 1) // 8)
             item = i - (page * 8)
             self.click(*coords.HACK_PAGE[page])
             self.click(*coords.HACKS[item])
+
+    def basic_training(self, value=4000):
+        """Allocate energy to basic training 0 (Idle Attack).
+           Works best with sync training option (uses 2x value energy) and auto advance XP purchase.
+           TODO: determine energy needed automatically
+
+           Keyword arguments
+           value -- amount of energy to allocate
+        """
+        self.menu("basictraining")
+        self.input_box()
+        self.send_string(value)
+        self.click(*coords.BASIC_TRAINING_0_PLUS)
+
+    def cap_last_basic_training(self):
+        """Clicks the cap button on basic training 5 (Ultimate Attack).
+           Works best with sync training option.
+        """
+        self.menu("basictraining")
+        self.click(*coords.BASIC_TRAINING_5_CAP)
+
