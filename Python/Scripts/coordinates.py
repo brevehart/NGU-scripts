@@ -3,6 +3,7 @@ from collections import namedtuple
 Pixel = namedtuple('Pixel', 'x y')
 ColorPixel = namedtuple('ColorPixel', Pixel._fields + ('color',))
 OCRBox = namedtuple('OCRBox', 'x1 y1 x2 y2')
+Zone = namedtuple('Zone', 'index name unlock ocrkey', defaults=("",))
 
 # COLORS
 TOP_LEFT_COLOR = '000408'
@@ -41,6 +42,7 @@ ITOPOD_END = Pixel(625, 265)
 ITOPOD_ENTER = Pixel(625, 330)
 ITOPOD_AUTO = Pixel(710, 215)
 HEALTH = Pixel(706, 411)
+HEALTH2 = Pixel(705, 411)
 
 # TODO: Rewrite kill_titan
 ABILITY_ROW1X = 426
@@ -58,8 +60,8 @@ ABILITY_REGULAR_ATTACK = Pixel(430, 105)
 # ABILITY_ANCHOR_PIXEL = Pixel(321, 113)
 TX = 17
 TY = 197
-ABILITY_ANCHOR_PIXEL = Pixel(339 - TX, 292 - TY)
-ABILITY_OFFSETX = 105
+ABILITY_ANCHOR_PIXEL = Pixel(360, 93)
+ABILITY_OFFSETX = 105  # actually, 1 extra pixel between piercing and ultimate attacks
 ABILITY_OFFSETY = 38
 
 # ROW 1 ABILITIES
@@ -109,14 +111,20 @@ TITAN_PT = {"GRB": {"p": 1.3e3, "t": 1.3e3}, "GCT": {"p": 5e3, "t": 4e3},
 TITAN_ZONE = {"GRB": 7, "GCT": 9, "jake": 12, "UUG": 15, "walderp": 17,
               "BEAST1": 20, "BEAST2": 20, "BEAST3": 20, "BEAST4": 20}
 
+
+ADV_ZONES = [
+    Zone(0, "safe zone", 4, "safe zone"),
+    Zone(1, "tutorial", 4),
+    Zone(2, "sewers", 7)
+]
+
 OCR_ADV_POW = OCRBox(370, 296, 483, 313)
 OCR_ADV_TOUGH = OCRBox(406, 313, 506, 330)
 OCR_ADV_TITAN = OCRBox(560, 277, 685, 330)
 OCR_ADV_ENEMY_CHECK = OCRBox(766, 382, 889, 403)
 OCR_COMBAT_LOG = OCRBox(310, 496, 600, 589)
-OCR_TITANS_AVAILABLE = OCRBox(281 - 23, 282 - 198, 540 - 23,
-                              300 - 198)  # probably need to expand based on highest zone/max titan
-OCR_ADV_ZONE = OCRBox(330 - 23, 210 - 198, 960 - 23, 270 - 198)
+OCR_TITANS_AVAILABLE = OCRBox(260, 70, 520, 100)  # positioned from nav.menu("adventure"), probably need to expand based on highest zone/max titan, y1 = 85 for only GRB
+OCR_ADV_ZONE = OCRBox(310, 10, 940, 70)
 
 # MENU OFFSETS
 
@@ -436,3 +444,6 @@ HACK_PAGE_Y = 182
 HACK_PAGE = [Pixel(335, HACK_PAGE_Y), Pixel(395, HACK_PAGE_Y)]
 
 BOTTOM_RIGHT_CORNER = Pixel(957, 598)  # for clicking to remove tooltips
+SETTINGS_MENU = Pixel(27, 540)
+SETTINGS_TIMED_TOOLTIPS_ON = Pixel(500, 220)
+SETTINGS_TIMED_TOOLTIPS_OFF = Pixel(580, 220)

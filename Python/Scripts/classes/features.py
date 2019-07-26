@@ -21,44 +21,6 @@ class Features(Navigation, Inputs):
     current_adventure_zone = 0
     inventory_cleaned = False
 
-    def merge_equipment(self):
-        """Navigate to inventory and merge equipment."""
-        self.menu("inventory")
-        for slot in coords.EQUIPMENT_SLOTS:
-            if (slot == "cube"):
-                return
-            self.click(*coords.EQUIPMENT_SLOTS[slot])
-            self.send_string("d")
-
-    def boost_equipment(self):
-        """Boost all equipment."""
-        self.menu("inventory")
-        for slot in coords.EQUIPMENT_SLOTS:
-            if (slot == "cube"):
-                # self.click(*coords.EQUIPMENT_SLOTS[slot], "right") # use boost_cube for cube
-                return
-            self.click(*coords.EQUIPMENT_SLOTS[slot])
-            self.send_string("a")
-
-    def boost_cube(self):
-        """Boost cube."""
-        self.menu("inventory")
-        self.click(*self.equipment["cube"], "right")
-
-    def merge_boost(self, invmerge=12, invboost=6):
-        """Merges and boosts equipment and some inventory slots. Also, boosts cube.
-
-           Keyword arguments
-           invmerge: number of inventory slots to merge
-           invboost: number of inventory slots to boost
-        """
-        self.menu("inventory")
-        self.merge_equipment()
-        self.boost_equipment()
-        self.merge_inventory(invmerge)
-        self.boost_inventory(invboost)
-        self.boost_cube()
-
     def get_current_boss(self):
         """Go to fight and read current boss number."""
         self.menu("fight")
@@ -486,7 +448,7 @@ class Features(Navigation, Inputs):
         2 - MacGuffin alpha
         3 - MacGuffin beta
         """
-        print(self.get_pixel_color(*coords.COLOR_SPELL_READY))
+
         if self.check_pixel_color(*coords.COLOR_SPELL_READY):
             self.spells()
             self.click(*coords.BM_PILL, button="right")
@@ -532,7 +494,7 @@ class Features(Navigation, Inputs):
                 duration = userset.SPELL
 
             while time.time() < start + duration:
-                print(f"Sniping itopod for {duration} seconds while waiting to cast spell.")
+                print(f"Sniping itopod for {duration} seconds while waiting to cast spell #{target}.")
                 self.itopod_snipe(duration)
             self.spells()
             self.click(*targets[target])
@@ -725,21 +687,22 @@ class Features(Navigation, Inputs):
         self.click(*coords.ADV_TRAINING_WANDOOS_ENERGY)
         self.click(*coords.ADV_TRAINING_WANDOOS_MAGIC)
 
-    def titan_pt_check(self, target):
+    def titan_pt_check(self, target, modifiers=(1, 1)):
         """Check if we have the recommended p/t to defeat the target Titan.
 
         Keyword arguments:
         target -- The name of the titan you wish to kill. ["GRB", "GCT",
                   "jake", "UUG", "walderp", "BEAST1", "BEAST2", "BEAST3",
                   "BEAST4"]
+        modifiers -- tuple (power, tough) that multiplies recommended stats, default (1, 1)
         """
         self.menu("adventure")
         bmp = self.get_bitmap()
         power = self.ocr(*coords.OCR_ADV_POW, bmp=bmp)
         tough = self.ocr(*coords.OCR_ADV_TOUGH, bmp=bmp)
 
-        if (float(power) > coords.TITAN_PT[target]["p"] and
-                float(tough) > coords.TITAN_PT[target]["t"]):
+        if (float(power) > modifiers[0] * coords.TITAN_PT[target]["p"] and
+                float(tough) > modifiers[1] * coords.TITAN_PT[target]["t"]):
             return True
 
         else:
@@ -749,15 +712,39 @@ class Features(Navigation, Inputs):
             return False
 
     def titans_available(self):
-        """Returns a list of all titans available to fight."""
+        """Returns a list of all titans available to fight.
+           Doesn't check that you can get to their zones though.
+        """
         self.menu("adventure")  # click to get tooltip, maybe we can hover instead?
         titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
-        print(titans)
+        #print(titans)
         res = re.findall(r'^\s*(\w+)\s+SPAWN\s+READY$', titans, flags=re.M)
-        print(res)
+        print(f"Titans available: {res}")
         return res
 
-    def kill_titan(self, target):
+    def normalize_titan_name(self, name):
+        """Converts ocr value to kill_titan format."""  # possibly merge into titans_available
+        # implement this
+        return name
+
+    def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8)):
+        """Fights available titans up to 'max_titan' and returns True if any were fought.
+
+           Keyword arguments:
+           max_titan -- name of highest titan to attempt
+           check_stats -- whether to check adventure stats against recommended stats per titan
+           modifiers -- tuple (power, tough) that multiplies recommended stats
+        """
+        fought_titan = False
+        for titan in self.titans_available():  # make sure that titans_available and kill_titan use same names
+            if not check_stats or self.titan_pt_check(titan, modifiers=modifiers):
+                self.kill_titan(self.normalize_titan_name(titan))
+                fought_titan = True
+            if titan == max_titan:
+                break
+        return fought_titan
+
+    def kill_titan(self, target, report=True):
         """Attempt to kill the target titan.
 
         Keyword arguments:
@@ -765,6 +752,7 @@ class Features(Navigation, Inputs):
                   "jake", "UUG", "walderp", "BEAST1", "BEAST2", "BEAST3",
                   "BEAST4"]
         """
+
         self.menu("adventure")
         self.click(625, 500)  # click somewhere to move tooltip
         if self.check_pixel_color(*coords.IS_IDLE):
@@ -779,47 +767,42 @@ class Features(Navigation, Inputs):
         available = self.ocr(*coords.OCR_ADV_TITAN)
 
         if "titan" in available.lower():
+            print(f"Fighting titan {target} in zone {coords.TITAN_ZONE[target]}.")
             while self.check_pixel_color(*coords.IS_DEAD):
                 # print(self.get_pixel_color(*coords.HEALTH))
                 time.sleep(0.2)  # Make sure titans spawn, otherwise loop breaks
 
             # queue = deque(self.get_ability_queue())
-            queue = deque(self.get_ability_combo())
-            print(queue)
+            queue = deque(self.get_ability_combo(debug=report))
+            if report:
+                print(f"STARTING COMBO: {queue}")
             while not (self.check_pixel_color(*coords.IS_DEAD)):
-                # print(self.get_pixel_color(*coords.HEALTH))
+                # print(f"Enemy health color: {self.get_pixel_color(*coords.HEALTH)}")
                 if len(queue) == 0:
-                    print("NEW COMBO")
                     # queue = deque(self.get_ability_queue())
                     queue = deque(self.get_ability_combo())
-                    print(queue)
+                    if report:
+                        print(f"NEW COMBO: {queue}")
 
                 ability = queue.popleft()
-                print(f"using ability {ability}: {coords.ABILITY_NAMES[ability]}")
-                if ability <= 5:
-                    x = coords.ABILITY_ANCHOR_PIXEL.x + ability * coords.ABILITY_OFFSETX
-                    y = coords.ABILITY_ROW1Y
+                if report:
+                    print(f"using ability {ability}: {coords.ABILITY_NAMES[ability]}")
 
-                if ability > 5 and ability <= 11:
-                    x = coords.ABILITY_ROW2X + (ability - 6) * coords.ABILITY_OFFSETX
-                    y = coords.ABILITY_ROW2Y
-
-                if ability > 11:
-                    x = coords.ABILITY_ROW3X + (ability - 12) * coords.ABILITY_OFFSETX
-                    y = coords.ABILITY_ROW3Y
-
-                self.click(x, y)
-                self.click(625, 500)  # click somewhere to move tooltip
+                self.use_ability(ability)
                 time.sleep(userset.LONG_SLEEP)
-                color = self.get_pixel_color(coords.ABILITY_ROW1X,
-                                             coords.ABILITY_ROW1Y)
+                color = self.get_pixel_color(coords.ABILITY_ROW1X, coords.ABILITY_ROW1Y)
 
                 while color != coords.ABILITY_ROW1_READY_COLOR:
                     time.sleep(0.05)
-                    color = self.get_pixel_color(coords.ABILITY_ROW1X,
-                                                 coords.ABILITY_ROW1Y)
+                    color = self.get_pixel_color(coords.ABILITY_ROW1X, coords.ABILITY_ROW1Y)
 
-        print("Titan defeated or we were")  # could check zone to determine which
+            final_zone = self.get_adv_zone(openAdv=False)
+            if "safe" in final_zone.lower():
+                print(f"We lost to {target}.")
+            else:
+                print(f"We defeated a titan {target}!")
+        else:
+            print(f"No titan available in {self.get_adv_zone(openAdv=False)}. Probably could not reach titan zone.")
 
     # deprecated, use get_ability_combo instead
     def get_ability_queue(self):
@@ -871,7 +854,7 @@ class Features(Navigation, Inputs):
             queue.append(0)
         return queue
 
-    def get_ability_combo(self):
+    def get_ability_combo(self, debug=False):
         """Gives the highest priority combo of currently usable abilities.
 
            Priorities:
@@ -887,25 +870,15 @@ class Features(Navigation, Inputs):
         for i in range(1, 14):  # skip idle attack
             x = coords.ABILITY_ANCHOR_PIXEL.x
             y = coords.ABILITY_ANCHOR_PIXEL.y
-            if i <= 5:
-                x += i * coords.ABILITY_OFFSETX
-                y += 0
-                color = self.get_pixel_color(x, y)
-                if color == coords.ABILITY_ROW1_READY_COLOR:
-                    ready.append(i)
-            elif i > 5 and i <= 11:
-                x += (i - 6) * coords.ABILITY_OFFSETX
-                y += coords.ABILITY_OFFSETY
-                color = self.get_pixel_color(x, y)
-                if color == coords.ABILITY_ROW2_READY_COLOR:
-                    ready.append(i)
-            elif i > 11:
-                x += (i - 12) * coords.ABILITY_OFFSETX
-                y += coords.ABILITY_OFFSETY * 2
-                color = self.get_pixel_color(x, y)
-                if color == coords.ABILITY_ROW3_READY_COLOR:
-                    ready.append(i)
-            # print(f"i: {i}, color: {color}, x: {x+coords.TX}, y: {y+coords.TY}")
+            ab_per_row = 6
+            row = i // ab_per_row
+            x += (i % ab_per_row) * coords.ABILITY_OFFSETX
+            y += row * coords.ABILITY_OFFSETY
+            color = self.get_pixel_color(x, y)
+            if color == getattr(coords, f"ABILITY_ROW{row+1}_READY_COLOR"):
+                ready.append(i)
+            if debug:
+                print(f"i: {i}, color: {color}, x: {x}, y: {y}")
 
         # print("Available abilities")
         # print(ready)
@@ -953,6 +926,17 @@ class Features(Navigation, Inputs):
             queue.append(1)
         return queue
 
+    def use_ability(self, num):
+        """Uses specified ability number."""
+        abilities_per_row = 6
+        fudge_y = 20  # clicking abilities doesn't seem to work without this
+        x = coords.ABILITY_ANCHOR_PIXEL.x
+        y = coords.ABILITY_ANCHOR_PIXEL.y + fudge_y
+        x += (num % abilities_per_row) * coords.ABILITY_OFFSETX
+        y += (num // abilities_per_row) * coords.ABILITY_OFFSETY
+        self.click(x, y)
+        self.click(625, 500)  # click somewhere to move tooltip
+
     def save_check(self):
         """Check if we can do the daily save for AP.
 
@@ -962,6 +946,63 @@ class Features(Navigation, Inputs):
         if self.check_pixel_color(*coords.IS_SAVE_READY):
             self.click(*coords.SAVE)
         return
+
+    def merge_equipment(self):
+        """Navigate to inventory and merge equipment."""
+        self.menu("inventory")
+        for slot in coords.EQUIPMENT_SLOTS:
+            if (slot == "cube"):
+                return
+            self.click(*coords.EQUIPMENT_SLOTS[slot])
+            self.send_string("d")
+
+    def boost_equipment(self):
+        """Boost all equipment."""
+        self.menu("inventory")
+        for slot in coords.EQUIPMENT_SLOTS:
+            if (slot == "cube"):
+                # self.click(*coords.EQUIPMENT_SLOTS[slot], "right") # use boost_cube for cube
+                return
+            self.click(*coords.EQUIPMENT_SLOTS[slot])
+            self.send_string("a")
+
+    def boost_cube(self):
+        """Boost cube."""
+        self.menu("inventory")
+        self.click(*self.equipment["cube"], "right")
+
+    def merge_boost(self, merge=12, boost=6, transform=0):
+        """Merges and boosts equipment and some inventory slots. Also, boosts cube.
+
+           Keyword arguments
+           invmerge: number of inventory slots to merge
+           invboost: number of inventory slots to boost
+        """
+        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE == 0:
+            disable_tooltips = False
+        else:
+            disable_tooltips = True
+
+        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:
+            self.settings()
+            self.click(*coords.SETTINGS_TIMED_TOOLTIPS_OFF)
+
+        self.menu("inventory")
+        self.merge_equipment()
+        self.boost_equipment()
+
+        self.merge_inventory(merge)
+        self.boost_inventory(boost)
+        for i in range(1, transform + 1):  # range is [start, stop)
+            if not userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:
+                time.sleep(userset.LONG_SLEEP)  # wait for tooltip to expire, might need to be longer
+            self.transform_slot(i)
+        self.boost_cube()
+
+        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:  # assumes they were on initially
+            self.settings()
+            self.click(*coords.SETTINGS_TIMED_TOOLTIPS_ON)
+            self.menu("inventory")
 
     def get_inventory_slots(self, slots):
         """Get coords for inventory slots from 1 to slots."""
@@ -1020,10 +1061,10 @@ class Features(Navigation, Inputs):
                      between 0.7 - 0.95.
         consume -- Set to true if item is consumable instead.
         """
+        # print(f"Checking transform for slot #{slot}")
         self.menu("inventory")
         slot = self.get_inventory_slots(slot)[-1]
         self.click(*slot)
-        time.sleep(userset.SHORT_SLEEP)
 
         if consume:
             coords = self.image_search(Window.x, Window.y, Window.x + 960, Window.y + 600,
@@ -1033,6 +1074,7 @@ class Features(Navigation, Inputs):
                                        self.get_file_path("images", "transformable.png"), threshold)
 
         if coords:
+            # print(f"Transform found slot at {coords}")
             self.ctrl_click(*slot)
 
     def get_idle_cap(self, magic=False):

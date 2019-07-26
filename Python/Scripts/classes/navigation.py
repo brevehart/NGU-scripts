@@ -142,3 +142,11 @@ class Navigation(Inputs):
         self.click(*coords.SELLOUT_BOOST_2)
         time.sleep(userset.SHORT_SLEEP)
         Navigation.current_menu = "boost_2"
+
+    def settings(self):
+        """Navigate to settings (page 1)."""
+        if Navigation.current_menu == 'settings':
+            return
+        self.click(*coords.SETTINGS_MENU)
+        time.sleep(userset.SHORT_SLEEP)
+        Navigation.current_menu = "settings"

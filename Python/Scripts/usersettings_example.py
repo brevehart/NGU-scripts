@@ -14,3 +14,7 @@ SPELL = 300
 
 ERROR_URL = ""
 INFO_URL = ""
+
+# Whether to disable popup tooltips during merge_boost, helpful for transformation checking
+
+DISABLE_TIMED_TOOLTIPS_DURING_MERGE = False
