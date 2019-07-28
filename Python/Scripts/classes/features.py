@@ -24,8 +24,8 @@ class Features(Navigation, Inputs):
     def get_current_boss(self):
         """Go to fight and read current boss number."""
         self.menu("fight")
-        boss = self.ocr(*coords.OCR_BOSS, debug=False)
-        return self.remove_letters(boss)
+        boss = self.ocr_number(*coords.OCR_BOSS, debug=False)
+        return int(self.remove_letters(boss))
 
     def nuke(self, boss=None):
         """Navigate to Fight Boss and Nuke or Fast Fight."""
@@ -51,7 +51,8 @@ class Features(Navigation, Inputs):
                     current_boss = 1
                 x += 1
                 if x > 7:  # Safeguard if number is too low to reach target boss, otherwise we get stuck here
-                    print(f"Couldn't reach the target boss ({current_boss} of {boss}), something probably went wrong the last rebirth.")
+                    print(f"Couldn't reach the target boss ({current_boss} of {boss}), "
+                          f"something probably went wrong the last rebirth.")
                     break
         else:
             self.click(*coords.NUKE)
@@ -86,6 +87,12 @@ class Features(Navigation, Inputs):
         self.menu("pit")
         self.click(*coords.SPIN_MENU)
         self.click(*coords.SPIN)
+
+    def is_evil_difficulty(self):
+        """Check whether difficulty is Evil."""
+        # implement, if possible
+        # could check stat breakdown Att/Def for Difficulty DIVIDER
+        return False
 
     def get_adv_zone(self, openAdv=True):
         """Get current adventure zone.
@@ -143,6 +150,52 @@ class Features(Navigation, Inputs):
             for i in range(zone):
                 self.click(*coords.RIGHT_ARROW)
             return
+
+    def get_max_adv_zone(self, zone=float('inf'), allow_titans=False):
+        """Get the maximum possible adventure zone based on Fight Boss progression.
+
+           Keyword arguments:
+            zone -- Optional max zone limiter
+            allow_titans -- Whether to include titan zones in allowable zones. Default False.
+        """
+        try:
+            boss = self.get_current_boss()
+
+            if self.is_evil_difficulty():
+                zlist = coords.ADV_ZONES_EVIL
+                offset = len(coords.ADV_ZONES)
+            else:
+                zlist = coords.ADV_ZONES
+                offset = 0
+
+            # go through zone list backward until an unlocked zone is found, skipping titan zones if not allowed
+            idx = next(
+                (i for i, v in enumerate(reversed(zlist)) if v.unlock_boss < boss and (allow_titans or not v.is_titan)),
+                None)
+            if idx is not None:
+                max_zone = len(zlist) - idx - 1 + offset  # convert to forward index
+                next_unlock = zlist[max_zone-offset+1].unlock_boss
+            else:
+                max_zone = float('inf')
+                next_unlock = float('inf')
+                print(f"No max zone found. How? Boss: {boss}, target zone: {zone}, titans? {allow_titans}, zones: {zlist}")
+
+            if max_zone >= zone:
+                zone_target_reached = True
+                max_zone = zone
+            else:
+                zone_target_reached = False
+            return max_zone, zone_target_reached, next_unlock
+        except ValueError:
+            print("Couldn't get current boss. Ignoring zone boss unlock check.")
+            return zone, False, 0
+
+    def check_dead_in_adv(self):
+        """Go to adventure and check zone. Return True if zone is Safe Zone (0)."""
+        if "safe zone" in self.get_adv_zone(openAdv=True).lower():
+            return True
+        else:
+            return False
 
     def snipe(self, zone, duration, once=False, highest=False, bosses=False, manual=False):
         """Go to adventure and snipe bosses in specified zone.
@@ -213,7 +266,7 @@ class Features(Navigation, Inputs):
         self.click(*coords.ABILITY_IDLE_MODE)
 
     def itopod_snipe(self, duration):
-        """Manually snipes ITOPOD for increased speed PP/h.
+        """Manually snipe ITOPOD for increased speed PP/h.
 
         Keyword arguments:
         duration -- Duration in seconds to snipe, before toggling idle mode
@@ -298,7 +351,7 @@ class Features(Navigation, Inputs):
         return True if self.check_pixel_color(*coords.COLOR_CHALLENGE_ACTIVE) else False
 
     def pit(self, loadout=0):
-        """Throws money into the pit.
+        """Throw money into the pit.
 
         Keyword arguments:
         loadout -- The loadout you wish to equip before throwing gold
@@ -314,7 +367,7 @@ class Features(Navigation, Inputs):
             self.click(*coords.PIT)
             self.click(*coords.CONFIRM)
 
-    def augments(self, augments, energy):
+    def augments(self, augments, energy, allow_ocr_fail=False):
         """Dump energy into augmentations.
 
         Keyword arguments
@@ -325,6 +378,9 @@ class Features(Navigation, Inputs):
                      "SM": 0, "AA": 0, "EB": 0, "CS": 0, "AE": 0, "ES": 0,
                      "LS": 0.9, "QSL": 0.1}
         Energy -- The total amount of energy you want to use for all augments.
+        allow_ocr_fail -- Ignores the augment scroll bar check. Default False.
+                    Warning: could click unintended items (dangerous).
+                    Allows assignment to potentially work when screen is not visible.
         """
         self.menu("augmentations")
         for k in augments:
@@ -345,8 +401,11 @@ class Features(Navigation, Inputs):
                         Navigation.current_menu = ""
                         self.menu("augmentations")
                     elif i > 10:
-                        print("Couldn't assign augments")
-                        break
+                        if allow_ocr_fail:
+                            print("Warning: Augment OCR failed. Trying to assign anyway.")
+                        else:
+                            print("Couldn't assign augments")
+                            break
 
             else:
                 color = self.get_pixel_color(*coords.AUG_SCROLL_SANITY_TOP)
@@ -359,8 +418,11 @@ class Features(Navigation, Inputs):
                         Navigation.current_menu = ""
                         self.menu("augmentations")
                     elif i > 10:
-                        print("Couldn't assign augments")
-                        break
+                        if allow_ocr_fail:
+                            print("Augment OCR failed. Trying to assign anyway.")
+                        else:
+                            print("Couldn't assign augments")
+                            break
             self.click(*coords.AUGMENT[k])
 
     def time_machine(self, e, m=0, magic=False):
@@ -701,6 +763,9 @@ class Features(Navigation, Inputs):
         power = self.ocr(*coords.OCR_ADV_POW, bmp=bmp)
         tough = self.ocr(*coords.OCR_ADV_TOUGH, bmp=bmp)
 
+        power = power.replace(",", "")  # remove commas on "small" numbers (<1e6)
+        tough = tough.replace(",", "")
+
         if (float(power) > modifiers[0] * coords.TITAN_PT[target]["p"] and
                 float(tough) > modifiers[1] * coords.TITAN_PT[target]["t"]):
             return True
@@ -712,7 +777,7 @@ class Features(Navigation, Inputs):
             return False
 
     def titans_available(self):
-        """Returns a list of all titans available to fight.
+        """Get a list of all titans available to fight.
            Doesn't check that you can get to their zones though.
         """
         self.menu("adventure")  # click to get tooltip, maybe we can hover instead?
@@ -723,12 +788,12 @@ class Features(Navigation, Inputs):
         return res
 
     def normalize_titan_name(self, name):
-        """Converts ocr value to kill_titan format."""  # possibly merge into titans_available
+        """Convert ocr value to kill_titan format."""  # possibly merge into titans_available
         # implement this
         return name
 
     def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8)):
-        """Fights available titans up to 'max_titan' and returns True if any were fought.
+        """Fight available titans up to 'max_titan' and returns True if any were fought.
 
            Keyword arguments:
            max_titan -- name of highest titan to attempt
@@ -776,7 +841,7 @@ class Features(Navigation, Inputs):
             queue = deque(self.get_ability_combo(debug=report))
             if report:
                 print(f"STARTING COMBO: {queue}")
-            while not (self.check_pixel_color(*coords.IS_DEAD)):
+            while not (self.check_pixel_color(*coords.IS_DEAD)):  # sometimes ends combat while titan is still (barely) alive
                 # print(f"Enemy health color: {self.get_pixel_color(*coords.HEALTH)}")
                 if len(queue) == 0:
                     # queue = deque(self.get_ability_queue())
@@ -855,7 +920,7 @@ class Features(Navigation, Inputs):
         return queue
 
     def get_ability_combo(self, debug=False):
-        """Gives the highest priority combo of currently usable abilities.
+        """Get the highest priority combo of currently usable abilities.
 
            Priorities:
            Paralyze (charge first, can we detect paralysis?)
@@ -927,7 +992,7 @@ class Features(Navigation, Inputs):
         return queue
 
     def use_ability(self, num):
-        """Uses specified ability number."""
+        """Use specified ability number."""
         abilities_per_row = 6
         fudge_y = 20  # clicking abilities doesn't seem to work without this
         x = coords.ABILITY_ANCHOR_PIXEL.x
@@ -972,18 +1037,17 @@ class Features(Navigation, Inputs):
         self.click(*self.equipment["cube"], "right")
 
     def merge_boost(self, merge=12, boost=6, transform=0):
-        """Merges and boosts equipment and some inventory slots. Also, boosts cube.
+        """Merge, boost, and transform equipment and some inventory slots. Also, boosts cube.
 
            Keyword arguments
-           invmerge: number of inventory slots to merge
-           invboost: number of inventory slots to boost
+           merge -- number of inventory slots to merge
+           boost -- number of inventory slots to boost
+           transform -- number of inventory slots to transform
         """
-        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE == 0:
-            disable_tooltips = False
-        else:
-            disable_tooltips = True
 
-        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:
+        disable_tooltips = getattr(userset, "DISABLE_TIMED_TOOLTIPS_DURING_MERGE", False)  # default False
+
+        if disable_tooltips:
             self.settings()
             self.click(*coords.SETTINGS_TIMED_TOOLTIPS_OFF)
 
@@ -994,12 +1058,12 @@ class Features(Navigation, Inputs):
         self.merge_inventory(merge)
         self.boost_inventory(boost)
         for i in range(1, transform + 1):  # range is [start, stop)
-            if not userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:
+            if not disable_tooltips:
                 time.sleep(userset.LONG_SLEEP)  # wait for tooltip to expire, might need to be longer
             self.transform_slot(i)
         self.boost_cube()
 
-        if userset.DISABLE_TIMED_TOOLTIPS_DURING_MERGE:  # assumes they were on initially
+        if disable_tooltips:  # assumes they were on initially
             self.settings()
             self.click(*coords.SETTINGS_TIMED_TOOLTIPS_ON)
             self.menu("inventory")
@@ -1079,6 +1143,8 @@ class Features(Navigation, Inputs):
 
     def get_idle_cap(self, magic=False):
         """Get the available idle energy or magic."""
+        if hasattr(self, "get_em"):
+            return self.get_em(cap=False, magic=magic)
         try:
             if magic:
                 res = self.ocr(*coords.OCR_MAGIC)
@@ -1091,6 +1157,34 @@ class Features(Navigation, Inputs):
                 return 0
         except ValueError:
             print("Couldn't get idle e/m")
+
+    def get_em(self, cap=False, magic=False):
+        """Get idle or maximum energy or magic. Defaults: idle, energy"""
+        try:
+            if cap:  # get caps from Spend Exp menu
+                if magic:
+                    self.exp_magic()
+                    res = self.ocr(*coords.OCR_CAP)
+                else:
+                    self.exp()
+                    res = self.ocr(*coords.OCR_CAP)
+            else:  # idle,
+                if magic:
+                    res = self.ocr(*coords.OCR_MAGIC)
+                else:
+                    res = self.ocr(*coords.OCR_ENERGY)
+            # print(res)
+            # numbers must have at least 3 characters (i.e., 100+)
+            # match scientific notation
+            # remove commas for numbers not using sci-notation (e.g., those < 1e7 and some in menus)
+            match = re.search(r"([0-9.E+,]{3,})", res)
+            # print(match)
+            if match is not None:
+                return int(float(match.group(1).replace(',', '')))
+            else:
+                return 0
+        except ValueError:
+            print("Couldn't get e/m max")
 
     def get_quest_text(self):
         """Check if we have an active quest or not."""

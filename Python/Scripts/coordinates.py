@@ -3,7 +3,7 @@ from collections import namedtuple
 Pixel = namedtuple('Pixel', 'x y')
 ColorPixel = namedtuple('ColorPixel', Pixel._fields + ('color',))
 OCRBox = namedtuple('OCRBox', 'x1 y1 x2 y2')
-Zone = namedtuple('Zone', 'index name unlock ocrkey', defaults=("",))
+Zone = namedtuple('Zone', 'name unlock_boss is_titan', defaults=(False,))
 
 # COLORS
 TOP_LEFT_COLOR = '000408'
@@ -58,8 +58,6 @@ ABILITY_REGULAR_ATTACK = Pixel(430, 105)
 
 # TODO: FIX TITAN SNIPE
 # ABILITY_ANCHOR_PIXEL = Pixel(321, 113)
-TX = 17
-TY = 197
 ABILITY_ANCHOR_PIXEL = Pixel(360, 93)
 ABILITY_OFFSETX = 105  # actually, 1 extra pixel between piercing and ultimate attacks
 ABILITY_OFFSETY = 38
@@ -87,19 +85,18 @@ ABILITY_ROW3_READY_COLOR = "C39494"
 # ABILITIY_NAMES, includes toggles
 ABILITY_NAMES = ["Idle Attack", "Regular Attack", "Strong Attack", "Parry", "Piercing Attack", "Ultimate Attack",
                  "Block", "Defensive Buff", "Heal", "Offensive Buff", "Charge", "Ultimate Buff",
-                 "Paralyze", "Hyper Regen", "Beast Mode"
-                 ]
+                 "Paralyze", "Hyper Regen", "Beast Mode"]
 
-# TODO: FIX ABILITY NUMBERING TO NEW SCHEME
-ABILITY_PRIORITY = {1: 6,  # Strong
-                    2: 8,  # Parry
-                    3: 9,  # Piercing
-                    4: 10,  # Ultimate
-                    5: 4,  # Block
-                    6: 5,  # Defensive
-                    9: 12,  # Charge
-                    11: 13  # Paralyze
-                    }
+# # TODO: FIX ABILITY NUMBERING TO NEW SCHEME
+# ABILITY_PRIORITY = {1: 6,  # Strong
+#                     2: 8,  # Parry
+#                     3: 9,  # Piercing
+#                     4: 10,  # Ultimate
+#                     5: 4,  # Block
+#                     6: 5,  # Defensive
+#                     9: 12,  # Charge
+#                     11: 13  # Paralyze
+#                     }
 
 # titan dictionaries
 TITAN_PT = {"GRB": {"p": 1.3e3, "t": 1.3e3}, "GCT": {"p": 5e3, "t": 4e3},
@@ -113,13 +110,23 @@ TITAN_ZONE = {"GRB": 7, "GCT": 9, "jake": 12, "UUG": 15, "walderp": 17,
 
 
 ADV_ZONES = [
-    Zone(0, "safe zone", 4, "safe zone"),
-    Zone(1, "tutorial", 4),
-    Zone(2, "sewers", 7)
+    Zone("safe zone", 4), Zone("tutorial", 4), Zone("sewers", 7), Zone("forest", 17), Zone("cave", 37),
+    Zone("sky", 48), Zone("HSB", 58), Zone("GRB", 58, True), Zone("clock", 66), Zone("GCT", 66, True),
+    Zone("2D", 74), Zone("battlefield", 82), Zone("jake", 82, True), Zone("strange", 90), Zone("mega", 100),
+    Zone("uug", 100, True), Zone("beardverse", 108), Zone("walderp", 116, True), Zone("BDW", 116), Zone("boring", 124),
+    Zone("beast", 132, True), Zone("chocolate", 137)
 ]
 
-OCR_ADV_POW = OCRBox(370, 296, 483, 313)
-OCR_ADV_TOUGH = OCRBox(406, 313, 506, 330)
+ADV_ZONES_EVIL = [
+    Zone("evilverse", 58), Zone("PPPL", 100), Zone("greasy", 125, True), Zone("meta", 158), Zone("idparty", 166),
+    Zone("godmother", 166, True), Zone("typo", 174), Zone("fad", 182), Zone("JRPG", 190), Zone("exile", 190, True)
+]
+
+ADV_ZONES_OCR_NAMES = ['TUTORIAL ZONE', 'SEWERS', 'FOREST', 'CAVE OF MANY THINGS', 'THE SKY', 'HIGH SECURITY BASE',
+                       'GORDON RAMSAY BOLTON', 'CLOCK DIMENSION', 'GRAND CORRUPTED TREE']
+
+OCR_ADV_POW = OCRBox(365, 296, 483, 313)
+OCR_ADV_TOUGH = OCRBox(400, 313, 506, 330)
 OCR_ADV_TITAN = OCRBox(560, 277, 685, 330)
 OCR_ADV_ENEMY_CHECK = OCRBox(766, 382, 889, 403)
 OCR_COMBAT_LOG = OCRBox(310, 496, 600, 589)
@@ -303,7 +310,7 @@ OCR_BOSS = OCRBox(800 - 23, 500 - 198, 890 - 23, 522 - 198)
 OCR_PP = OCRBox(785, 25, 901, 43)
 OCR_EXP = OCRBox(340, 65, 900, 95)  # From EXP Menu
 OCR_POW = OCRBox(468, 303, 616, 330)
-OCR_CAP = OCRBox(627, 303, 776, 330)
+OCR_CAP = OCRBox(627, 293, 776, 330)
 OCR_BAR = OCRBox(787, 303, 937, 330)
 OCR_ECAP = OCRBox(9, 44, 165, 63)
 OCR_TOTAL_EXP = OCRBox(510, 365, 928, 400)  # From MISC Info
@@ -312,6 +319,8 @@ OCR_NGU_E = OCRBox(820, 190, 940, 219)
 # STATS OCR
 OCR_ENERGY = OCRBox(12, 28, 165, 50)
 OCR_MAGIC = OCRBox(12, 70, 165, 90)
+OCR_ENERGY_CAP = OCRBox(12, 47, 165, 65)
+OCR_MAGIC_CAP = OCRBox(12, 90, 165, 106)
 
 # OCR CHALLENGES
 OCR_CHALLENGE_NAME = OCRBox(465, 87, 750, 104)
