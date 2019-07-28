@@ -110,12 +110,12 @@ class Features(Navigation, Inputs):
         # print(zone.lower())
         return zone
 
-    def get_max_adv_zone(self, zone=float('inf'), allow_titans=False):
+    def get_max_adv_zone(self, zone=float('inf'), skip_titans=True):
         """Get the maximum possible adventure zone based on Fight Boss progression.
 
            Keyword arguments:
             zone -- Optional max zone limiter
-            allow_titans -- Whether to include titan zones in allowable zones. Default False.
+            skip_titans -- Whether to include titan zones in allowable zones. Default True.
         """
         try:
             boss = self.get_current_boss()
@@ -129,7 +129,7 @@ class Features(Navigation, Inputs):
 
             # go through zone list backward until an unlocked zone is found, skipping titan zones if not allowed
             idx = next(
-                (i for i, v in enumerate(reversed(zlist)) if v.unlock_boss < boss and (allow_titans or not v.is_titan)),
+                (i for i, v in enumerate(reversed(zlist)) if v.unlock_boss < boss and not(v.is_titan and skip_titans)),
                 None)
             if idx is not None:
                 max_zone = len(zlist) - idx - 1 + offset  # convert to forward index
@@ -137,7 +137,8 @@ class Features(Navigation, Inputs):
             else:
                 max_zone = float('inf')
                 next_unlock = float('inf')
-                print(f"No max zone found. How? Boss: {boss}, target zone: {zone}, titans? {allow_titans}, zones: {zlist}")
+                print(f"No max zone found. Adventuring not unlocked or zone list is probably inaccurate. "
+                      f"Boss: {boss}, target zone: {zone}, titans? {skip_titans}, zones: {zlist}")
 
             if max_zone >= zone:
                 zone_target_reached = True
