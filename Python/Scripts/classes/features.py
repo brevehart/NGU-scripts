@@ -94,13 +94,13 @@ class Features(Navigation, Inputs):
         # could check stat breakdown Att/Def for Difficulty DIVIDER
         return False
 
-    def get_adv_zone(self, openAdv=True):
+    def get_adv_zone(self, open_adv=True):
         """Get current adventure zone.
 
            Keyword arguments
            openAdv -- if True (default), opens adventure menu before determining zone
         """
-        if openAdv:
+        if open_adv:
             self.menu("adventure")
             self.click(625, 500)  # click somewhere to move tooltip
         zone = self.ocr(*coords.OCR_ADV_ZONE)
@@ -152,7 +152,7 @@ class Features(Navigation, Inputs):
 
     def check_dead_in_adv(self):
         """Go to adventure and check zone. Return True if zone is Safe Zone (0)."""
-        if "safe zone" in self.get_adv_zone(openAdv=True).lower():
+        if "safe zone" in self.get_adv_zone(open_adv=True).lower():
             return True
         else:
             return False
@@ -862,13 +862,13 @@ class Features(Navigation, Inputs):
                     time.sleep(0.05)
                     color = self.get_pixel_color(coords.ABILITY_ROW1X, coords.ABILITY_ROW1Y)
 
-            final_zone = self.get_adv_zone(openAdv=False)
+            final_zone = self.get_adv_zone(open_adv=False)
             if "safe" in final_zone.lower():
                 print(f"We lost to {target}.")
             else:
                 print(f"We defeated a titan {target}!")
         else:
-            print(f"No titan available in {self.get_adv_zone(openAdv=False)}. Probably could not reach titan zone.")
+            print(f"No titan available in {self.get_adv_zone(open_adv=False)}. Probably could not reach titan zone.")
 
     # deprecated, use get_ability_combo instead
     def get_ability_queue(self):
