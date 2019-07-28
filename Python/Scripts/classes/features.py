@@ -24,7 +24,7 @@ class Features(Navigation, Inputs):
     def get_current_boss(self):
         """Go to fight and read current boss number."""
         self.menu("fight")
-        boss = self.ocr_number(*coords.OCR_BOSS, debug=False)
+        boss = self.ocr(*coords.OCR_BOSS, debug=False)
         return int(self.remove_letters(boss))
 
     def nuke(self, boss=None):
