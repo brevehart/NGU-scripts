@@ -110,47 +110,6 @@ class Features(Navigation, Inputs):
         # print(zone.lower())
         return zone
 
-    def adventure(self, zone=0, highest=True, itopod=None, itopodauto=False):
-        """Go to adventure zone to idle.
-
-        Keyword arguments
-        zone -- Zone to idle in, 0 is safe zone, 1 is tutorial and so on.
-        highest -- If true, will go to your highest available non-titan zone.
-        itopod -- If set to true, it will override other settings and will
-                  instead enter the specified ITOPOD floor.
-        itopodauto -- If set to true it will click the "optimal" floor button.
-        """
-        self.menu("adventure")
-        self.click(625, 500)  # click somewhere to move tooltip
-        if not self.check_pixel_color(*coords.IS_IDLE):
-            self.click(*coords.ABILITY_IDLE_MODE)
-        if itopod:
-            self.current_adventure_zone = 0
-            self.click(*coords.ITOPOD)
-            if itopodauto:
-                self.click(*coords.ITOPOD_END)
-                # set end to 0 in case it's higher than start
-                self.send_string("0")
-                self.click(*coords.ITOPOD_AUTO)
-                self.click(*coords.ITOPOD_ENTER)
-                return
-            self.click(*coords.ITOPOD_START)
-            self.send_string(str(itopod))
-            self.click(*coords.ITOPOD_END)
-            self.send_string(str(itopod))
-            self.click(*coords.ITOPOD_ENTER)
-            return
-        if highest or zone >= len(coords.QUESTING_ZONES):
-            self.current_adventure_zone = 0
-            self.click(*coords.RIGHT_ARROW, button="right")
-            return
-        else:
-            self.current_adventure_zone = zone
-            self.click(*coords.LEFT_ARROW, button="right")
-            for i in range(zone):
-                self.click(*coords.RIGHT_ARROW)
-            return
-
     def get_max_adv_zone(self, zone=float('inf'), allow_titans=False):
         """Get the maximum possible adventure zone based on Fight Boss progression.
 
@@ -196,6 +155,47 @@ class Features(Navigation, Inputs):
             return True
         else:
             return False
+
+    def adventure(self, zone=0, highest=True, itopod=None, itopodauto=False):
+        """Go to adventure zone to idle.
+
+        Keyword arguments
+        zone -- Zone to idle in, 0 is safe zone, 1 is tutorial and so on.
+        highest -- If true, will go to your highest available non-titan zone.
+        itopod -- If set to true, it will override other settings and will
+                  instead enter the specified ITOPOD floor.
+        itopodauto -- If set to true it will click the "optimal" floor button.
+        """
+        self.menu("adventure")
+        self.click(625, 500)  # click somewhere to move tooltip
+        if not self.check_pixel_color(*coords.IS_IDLE):
+            self.click(*coords.ABILITY_IDLE_MODE)
+        if itopod:
+            self.current_adventure_zone = 0
+            self.click(*coords.ITOPOD)
+            if itopodauto:
+                self.click(*coords.ITOPOD_END)
+                # set end to 0 in case it's higher than start
+                self.send_string("0")
+                self.click(*coords.ITOPOD_AUTO)
+                self.click(*coords.ITOPOD_ENTER)
+                return
+            self.click(*coords.ITOPOD_START)
+            self.send_string(str(itopod))
+            self.click(*coords.ITOPOD_END)
+            self.send_string(str(itopod))
+            self.click(*coords.ITOPOD_ENTER)
+            return
+        if highest or zone >= len(coords.QUESTING_ZONES):
+            self.current_adventure_zone = 0
+            self.click(*coords.RIGHT_ARROW, button="right")
+            return
+        else:
+            self.current_adventure_zone = zone
+            self.click(*coords.LEFT_ARROW, button="right")
+            for i in range(zone):
+                self.click(*coords.RIGHT_ARROW)
+            return
 
     def snipe(self, zone, duration, once=False, highest=False, bosses=False, manual=False):
         """Go to adventure and snipe bosses in specified zone.
