@@ -133,7 +133,9 @@ class Features(Navigation, Inputs):
                 None)
             if idx is not None:
                 max_zone = len(zlist) - idx - 1 + offset  # convert to forward index
-                next_unlock = zlist[max_zone-offset+1].unlock_boss
+
+                next_unlock = next(
+                    (z.unlock_boss for z in zlist[max_zone-offset+1:] if not(z.is_titan and skip_titans)), float('inf'))
             else:
                 max_zone = float('inf')
                 next_unlock = float('inf')
