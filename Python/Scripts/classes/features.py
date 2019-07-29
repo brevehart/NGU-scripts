@@ -470,12 +470,35 @@ class Features(Navigation, Inputs):
             else:
                 self.click(*coords.BM[i])
 
-    def wandoos(self, magic=False):
-        """Assign energy and/or magic to wandoos."""
+    def wandoos(self, magic=False, amount=()):
+        """Assign energy and/or magic to wandoos.
+
+           Keyword arguments:
+               magic -- Whether to allocate magic equal to energy.
+               amount -- Amount of energy to allocate or tuple of (energy, magic) to allocate.
+        """
         self.menu("wandoos")
-        self.click(*coords.WANDOOS_ENERGY)
-        if magic:
-            self.click(*coords.WANDOOS_MAGIC)
+        m = 0
+        try:
+            e = amount[0]
+            m = amount[1]
+        except TypeError:
+            try:
+                e = amount
+            except TypeError:
+                # no amount set, try to cap
+                self.click(*coords.WANDOOS_ENERGY)
+                if magic:
+                    self.click(*coords.WANDOOS_MAGIC)
+                return
+        self.input_box()
+        self.send_string(e)
+        self.click(*coords.WANDOOS_ENERGY_PLUS)
+        if magic or m:
+            if m:
+                self.input_box()
+                self.send_string(m)
+            self.click(*coords.WANDOOS_MAGIC_PLUS)
 
     def set_wandoos(self, version):
         """Set wandoos version.

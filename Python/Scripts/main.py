@@ -127,7 +127,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 # if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
                 #     allocated_cap = True
                 #     print("E/M cap reached.")
-                # #TODO: make these amount ratios of cap
+                #
                 # f.blood_magic(1)
                 # f.advanced_training(400000)
                 # f.time_machine(2e5, 4e4)  # add checks to get current allocation or just remove before adding
