@@ -203,9 +203,14 @@ TM_MULT_MINUS = Pixel(570, 335)
 # BLOOD MAGIC OFFSETS
 BM_LOCKED = Pixel(230, 285)  # old: Pixel(229, 294)
 
-BM_X = 570
-BM = {0: Pixel(BM_X, 228), 1: Pixel(BM_X, 263), 2: Pixel(BM_X, 298), 3: Pixel(BM_X, 333),
-      4: Pixel(BM_X, 369), 5: Pixel(BM_X, 403), 6: Pixel(BM_X, 438), 7: Pixel(BM_X, 473)}
+BM_CAP_ALL = Pixel(819, 111)
+BM_PLUS_X = 500
+
+BM_Y = [228, 263, 298, 333, 369, 403, 438, 473]
+BM_PLUS = {i: Pixel(BM_PLUS_X, BM_Y[i]) for i in range(len(BM_Y))}
+
+BM_CAP_X = 570
+BM = {i: Pixel(BM_CAP_X, BM_Y[i]) for i in range(len(BM_Y))}
 
 BM_SPELL = Pixel(390, 115)
 BM_PILL = Pixel(744, 216)
@@ -217,8 +222,7 @@ BM_AUTO_GOLD = Pixel(848, 313)
 BM_AUTO_DROP = Pixel(510, 313)
 
 BM_RECLAIM_X = 530
-BM_RECLAIM = [Pixel(BM_RECLAIM_X, 228), Pixel(BM_RECLAIM_X, 263), Pixel(BM_RECLAIM_X, 298), Pixel(BM_RECLAIM_X, 333),
-              Pixel(BM_RECLAIM_X, 369), Pixel(BM_RECLAIM_X, 403), Pixel(BM_RECLAIM_X, 438), Pixel(BM_RECLAIM_X, 473)]
+BM_RECLAIM = [Pixel(BM_RECLAIM_X, BM_Y[i]) for i in range(len(BM_Y))]
 
 OCR_BM_SPELL_TEXT = OCRBox(440, 350, 800, 412)
 

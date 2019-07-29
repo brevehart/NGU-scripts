@@ -455,11 +455,20 @@ class Features(Navigation, Inputs):
                 self.send_string(m)
             self.click(*coords.TM_MULT)
 
-    def blood_magic(self, target):
-        """Assign magic to BM."""
+    def blood_magic(self, target, amount=0):
+        """Assign magic to BM.
+
+            Keyword arguments:
+                amount -- Maximum amount of magic to assign to the 'target' ritual. Will still attempt to cap lower rituals.
+        """
         self.menu("bloodmagic")
         for i in range(target):
-            self.click(*coords.BM[i])
+            if amount > 0 and i == target - 1:
+                self.input_box()
+                self.send_string(amount)
+                self.click(*coords.BM_PLUS[i])
+            else:
+                self.click(*coords.BM[i])
 
     def wandoos(self, magic=False):
         """Assign energy and/or magic to wandoos."""

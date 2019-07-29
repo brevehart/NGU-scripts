@@ -93,7 +93,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
             f.adventure(zone=m_zone, highest=False)
             is_farming = True
             print(f"Farming: target zone: {f_zone}, actual: {f.get_adv_zone()}, target reached: {zone_target_reached}, "
-                  f"current boss: {f.get_current_boss()}, boss needed for next zone: {next_zone_unlock_boss}.")
+                  f"current boss: {f.get_current_boss()}, boss needed for next zone: {next_zone_unlock_boss+1}.")
             # f.menu("adventure")
         elif time.time() > start + 90 and not itopod_advance and not is_farming:
             f.adventure(itopod=True, itopodauto=True)
