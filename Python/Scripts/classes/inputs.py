@@ -246,7 +246,7 @@ class Inputs():
         return int(float(self.ocr(x_1, y_1, x_2, y_2)))
 
     def ocr_number_any(self, x_1, y_1, x_2, y_2):
-        """Extract the first number from the given coordinate box and convert it to int .
+        """Extract the first number from the given coordinate box and convert it to int.
 
            Will give incorrect results if given a comma-separated list of numbers.
         """
@@ -255,15 +255,15 @@ class Inputs():
         # remove any commas used for formatting numbers, we are not dealing with lists of numbers
         # res = res.replace(',', '')
         # numbers must start with a digit
-        # then may have any number of additional digits or comma-digit groups of the form ',\d\d\d'
+        # then may have any number of additional digits
+        # OR up to 2 additional digits and any number of comma-digit groups of the form ',\d\d\d'
         # followed by an optional '.' and any number of digits
         # and optionally have an exponent 'E+' (scientific, engineering notation)
         # doesn't check comma and period for proper usage so '9...5', '70,' and '2.,' would all match
-        match = re.search(r"([0-9](?:\d*|(?:,\d{3})*)(?:.\d*)?(?:E+\d+)?)", res)
+        match = re.search(r"([0-9](?:\d*|\d{0,2}(?:,\d{3})*)(?:\.\d*)?(?:E\+\d+)?)", res)
         # print(match)
         if match is None:
-            print(f"Returning 0. No number found in: {res}")
-            return 0
+            raise ValueError(f"No number found in: {res}")
         # remove commas if any (e.g., those < 1e7 and some in menus)
         return int(float(match.group(1)))
 

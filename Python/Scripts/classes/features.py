@@ -1176,27 +1176,29 @@ class Features(Navigation, Inputs):
             if cap:  # get caps from Spend Exp menu
                 if magic:
                     self.exp_magic()
-                    res = self.ocr(*coords.OCR_CAP)
+                    res = self.ocr_number_any(*coords.OCR_CAP)
                 else:
                     self.exp()
-                    res = self.ocr(*coords.OCR_CAP)
+                    res = self.ocr_number_any(*coords.OCR_CAP)
             else:  # idle,
                 if magic:
-                    res = self.ocr(*coords.OCR_MAGIC)
+                    res = self.ocr_number_any(*coords.OCR_MAGIC)
                 else:
-                    res = self.ocr(*coords.OCR_ENERGY)
-            # print(res)
-            # numbers must have at least 3 characters (i.e., 100+)
-            # match scientific notation
-            # remove commas for numbers not using sci-notation (e.g., those < 1e7 and some in menus)
-            match = re.search(r"([0-9.E+,]{3,})", res)
-            # print(match)
-            if match is not None:
-                return int(float(match.group(1).replace(',', '')))
-            else:
-                return 0
+                    res = self.ocr_number_any(*coords.OCR_ENERGY)
+            return res
+            # # print(res)
+            # # numbers must have at least 3 characters (i.e., 100+)
+            # # match scientific notation
+            # # remove commas for numbers not using sci-notation (e.g., those < 1e7 and some in menus)
+            # match = re.search(r"([0-9.E+,]{3,})", res)
+            # # print(match)
+            # if match is not None:
+            #     return int(float(match.group(1).replace(',', '')))
+            # else:
+            #     return 0
         except ValueError:
             print("Couldn't get e/m max")
+            return 0
 
     def get_quest_text(self):
         """Check if we have an active quest or not."""
