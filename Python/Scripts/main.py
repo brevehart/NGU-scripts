@@ -37,7 +37,8 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     else:
         # subtract elapsed time from start
         elapsed_time = f.rebirth_time_to_sec(f.get_rebirth_time())
-        print(f"Continuing {duration}-minute speedrun from {elapsed_time} seconds ({int(100 * elapsed_time / (duration * 60))}%).")
+        print(f"Continuing {duration}-minute speedrun from {elapsed_time} seconds "
+              f"({100 * elapsed_time / (duration * 60):.1f}%).")
 
     start = time.time() - elapsed_time
     end = start + (duration * 60) + 1
@@ -111,28 +112,34 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 is_farming = False  # reset flag so we try to reach our target zone if boss limited
 
             if not allocated_cap:
-                f.send_string("r")  # reclaim all e/m and then redistribute
-                f.send_string("t")
-                energy_cap = f.get_em(cap=True)
-                magic_cap = f.get_em(cap=True, magic=True)
-                energy_idle = f.get_em()
-                magic_idle = f.get_em(magic=True)
-                if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
-                    allocated_cap = True
-                    print("E/M cap reached.")
-                #TODO: make these amount ratios of cap
-                f.blood_magic(1)
-                f.advanced_training(400000)
-                f.time_machine(2e5, 4e4)  # add checks to get current allocation or just remove before adding
-                f.augments({"MI": 0.7, "DTMT": 0.3}, 3e5, allow_ocr_fail=True)
-                f.wandoos(True)   # probably need to cap wandoos in order for NGUs to work
-                try:
-                    NGU_energy = f.get_idle_cap()
-                    feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8, 9])
-                    NGU_magic = f.get_idle_cap(magic=True)
-                    feature.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
-                except ValueError:
-                    print("couldn't assign e/m to NGUs")
+                ratios = {"advanced_training": 1/3, "time_machine": (1/6, 1/4), "augments": 1/4, 'blood_magic': 1,
+                          "wandoos": 1/5, "ngu": 0.1}
+                augments = {"MI": 0.7, "DTMT": 0.3}
+                limits = {"time_machine": (4e5, 4e4)}
+                allocated_cap = f.distribute_em(max_ritual=1, ratios=ratios, augments=augments, limits=limits,
+                                                cap_factor=cap_factor)
+                # f.send_string("r")  # reclaim all e/m and then redistribute
+                # f.send_string("t")
+                # energy_cap = f.get_em(cap=True)
+                # magic_cap = f.get_em(cap=True, magic=True)
+                # energy_idle = f.get_em()
+                # magic_idle = f.get_em(magic=True)
+                # if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
+                #     allocated_cap = True
+                #     print("E/M cap reached.")
+                # #TODO: make these amount ratios of cap
+                # f.blood_magic(1)
+                # f.advanced_training(400000)
+                # f.time_machine(2e5, 4e4)  # add checks to get current allocation or just remove before adding
+                # f.augments({"MI": 0.7, "DTMT": 0.3}, 3e5, allow_ocr_fail=True)
+                # f.wandoos(True)   # probably need to cap wandoos in order for NGUs to work
+                # try:
+                #     NGU_energy = f.get_idle_cap()
+                #     feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8, 9])
+                #     NGU_magic = f.get_idle_cap(magic=True)
+                #     feature.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
+                # except ValueError:
+                #     print("couldn't assign e/m to NGUs")
                 time.sleep(0.5)
 
             if f.check_dead_in_adv():

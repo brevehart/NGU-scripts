@@ -751,7 +751,7 @@ class Features(Navigation, Inputs):
 
     # TODO: make this actually useful for anything
     def advanced_training(self, value):
-        """Assign energy to adventure power/thoughness and wandoos."""
+        """Assign energy to adventure power/toughness and wandoos."""
         self.menu("advtraining")
         value = value // 4
         self.input_box()
@@ -1458,3 +1458,115 @@ class Features(Navigation, Inputs):
         self.menu("basictraining")
         self.click(*coords.BASIC_TRAINING_5_CAP)
 
+    def distribute_em(self, augments=(), limits=(), ratios=(), reclaim=True, cap_factor=0.999, auto_calculate=False,
+                      max_ritual=8, report=True):
+        """Distribute energy and magic.
+
+           feature names: ["basic_training", "advanced_training", "augmentations", "time_machine", "blood_magic",
+                           "wandoos", "ngu"]
+           Keyword arguments:
+           augments -- dictionary of augmentation ratios (see features.augments)
+           limits -- dictionary of individual feature names and maximums
+           ratios -- dictionary of weights of max E/M to assign to each feature. Weights can be numbers or tuples(E, M).
+           reclaim -- Whether to reclaim E/M before assigning
+           cap_factor -- What percentage (0-1) of the cap is close enough to call 'capped'
+           auto_calculate -- Whether to determine amounts automatically (NOT implemented)
+           max_ritual -- Maximum blood magic ritual to attempt, 1-indexed.
+           report -- Whether to print informational statements.
+        """
+        if report:
+            print('Starting distribute_em.')
+        # default values
+        lims = {"basic_training": 1e5}
+        rats = {"advanced_training": 30, "wandoos": (10, 5), "augmentations": 30, "ngu": 5, "blood_magic": 70}
+        augs = {"SS": 0.7, "DS": 0.3}
+
+        # separate lists of features that use energy or magic
+        energy_features = ["basic_training", "advanced_training", "augments", "time_machine", "wandoos", "ngu"]
+        magic_features = ["time_machine", "blood_magic", "wandoos", "ngu"]
+
+        # overwrite defaults if parameters are present
+        if augments:
+            augs = augments
+        if limits:
+            lims = limits
+        if ratios:
+            rats = ratios
+
+        # normalize ratio and augment weights
+        def normalize_dict(d):
+            """Normalize values of a dictionary so they have unit (1) sum."""
+            norm_factor = 1.0/sum(d.values())
+            return {i: v * norm_factor for i, v in d.items()}
+
+        augs = normalize_dict(augs)
+        # separate energy and magic ratios and normalize
+        rats_m = normalize_dict({k: rats[k][1] if hasattr(rats[k], '__len__') else rats[k] for k in magic_features if k in rats})
+        rats_e = normalize_dict({k: rats[k][0] if hasattr(rats[k], '__len__') else rats[k] for k in energy_features if k in rats})
+
+        # print(rats)
+        # print(rats_m)
+        # print(rats_e)
+        if reclaim:
+            self.send_string("r")  # reclaim all e/m and then redistribute
+            self.send_string("t")
+        energy_cap = self.get_em(cap=True)
+        magic_cap = self.get_em(cap=True, magic=True)
+        energy_idle = self.get_em()
+        magic_idle = self.get_em(magic=True)
+        if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
+            allocated_cap = True
+            print(f"E/M cap reached (>={cap_factor*100:.1f}%).")
+        else:
+            allocated_cap = False
+
+        if report:
+            print(f"Distributing {energy_idle} (cap: {energy_cap}) energy and {magic_idle} (cap: {magic_cap}) magic.")
+
+        def get_limit(key, magic=False):
+            """Convert Energy ratio for key to int value, capped by 'lims'. Use magic=True for magic ratios."""
+            if magic:
+                dct = rats_m
+                cap = magic_idle
+                idx = 1
+            else:
+                dct = rats_e
+                cap = energy_idle
+                idx = 0
+            lim = lims.get(key, float('inf'))
+            lim = lim[idx] if hasattr(lim, '__len__') else lim
+            amt = dct.get(key) * cap
+            return int(min(amt, lim))  # works as long as dct values < inf
+
+        for feat in rats:  # there's probably a better way
+            e_amt = 0
+            m_amt = 0
+            if feat in rats_e:
+                e_amt = get_limit(feat)
+            if feat in rats_m:
+                m_amt = get_limit(feat, magic=True)
+            if report:
+                print(f"Distributing to {feat}, E: {e_amt}, M: {m_amt}.")
+            if feat == 'blood_magic':
+                self.blood_magic(max_ritual, amount=m_amt)
+            elif feat == 'advanced_training':
+                self.advanced_training(e_amt)
+            elif feat == 'time_machine':
+                self.time_machine(e_amt, m=m_amt)
+            elif feat == 'augments':
+                self.augments(augs, e_amt, allow_ocr_fail=True)
+            elif feat == 'wandoos':
+                self.wandoos(True)  # probably need to cap wandoos in order for NGUs to work
+            elif feat == 'ngu':
+                try:
+                    NGU_energy = e_amt
+                    self.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8, 9])
+                    NGU_magic = m_amt
+                    self.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
+                except ValueError:
+                    print("couldn't assign e/m to NGUs")
+        time.sleep(0.5)
+
+        if report:
+            print(f"Finished distribute_em. Cap reached: {allocated_cap}.")
+        return allocated_cap
