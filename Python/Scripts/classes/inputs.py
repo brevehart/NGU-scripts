@@ -253,14 +253,14 @@ class Inputs():
         res = self.ocr(x_1, y_1, x_2, y_2)
 
         # remove any commas used for formatting numbers, we are not dealing with lists of numbers
-        # res = res.replace(',', '')
+        res = res.replace(',', '')
         # numbers must start with a digit
         # then may have any number of additional digits
-        # OR up to 2 additional digits and any number of comma-digit groups of the form ',\d\d\d'
+        # #### NOPE: OR up to 2 additional digits and any number of comma-digit groups of the form ',\d\d\d'
         # followed by an optional '.' and any number of digits
         # and optionally have an exponent 'E+' (scientific, engineering notation)
         # doesn't check comma and period for proper usage so '9...5', '70,' and '2.,' would all match
-        match = re.search(r"([0-9](?:\d*|\d{0,2}(?:,\d{3})*)(?:\.\d*)?(?:E\+\d+)?)", res)
+        match = re.search(r"([0-9]\d*(?:\.\d*)?(?:E\+\d+)?)", res)
         # print(match)
         if match is None:
             raise ValueError(f"No number found in: {res}")
