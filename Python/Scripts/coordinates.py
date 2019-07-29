@@ -130,7 +130,10 @@ OCR_ADV_TOUGH = OCRBox(400, 313, 506, 330)
 OCR_ADV_TITAN = OCRBox(560, 277, 685, 330)
 OCR_ADV_ENEMY_CHECK = OCRBox(766, 382, 889, 403)
 OCR_COMBAT_LOG = OCRBox(310, 496, 600, 589)
-OCR_TITANS_AVAILABLE = OCRBox(260, 70, 520, 100)  # positioned from nav.menu("adventure"), probably need to expand based on highest zone/max titan, y1 = 85 for only GRB
+
+# probably need to expand based on highest zone/max titan, raise top height by 15px per titan?
+OCR_TITANS_AVAILABLE = OCRBox(260, 55, 520, 100)  # positioned from nav.menu("adventure") click
+
 OCR_ADV_ZONE = OCRBox(310, 10, 940, 70)
 
 # MENU OFFSETS
@@ -165,6 +168,14 @@ MENU_ITEMS = {
 NUMBER_INPUT_BOX = Pixel(440, 20)
 EXP = Pixel(90, 450)
 SAVE = Pixel(23, 483)
+# MENU LOCKED: UPPER LEFT CORNER
+MENU_LOCKED_ANCHOR = Pixel(185, 40)
+MENU_LOCKED_COLOR = '96A7B7'
+MENU_LOCKED_OFFSET_Y = 30
+MENU_LOCKED_ITEMS = {list(MENU_ITEMS.keys())[k]: ColorPixel(MENU_LOCKED_ANCHOR.x,
+                                                            MENU_LOCKED_ANCHOR.y + k * MENU_LOCKED_OFFSET_Y,
+                                                            MENU_LOCKED_COLOR)
+                     for k in range(len(MENU_ITEMS))}
 
 # BASIC TRAINING OFFSETS
 BASIC_TRAINING_0_PLUS = Pixel(840, 140)
@@ -308,8 +319,8 @@ SPIN = Pixel(713, 562)
 WANDOOS_ENERGY = Pixel(626, 252)
 WANDOOS_MAGIC = Pixel(626, 350)
 WANDOOS_VERSION = [Pixel(325, 420), Pixel(325, 445), Pixel(325, 470)]
-WANDOOS_ENERGY_PLUS = Pixel(575, 252)
-WANDOOS_MAGIC_PLUS = Pixel(575, 350)
+WANDOOS_ENERGY_PLUS = Pixel(560, 252)
+WANDOOS_MAGIC_PLUS = Pixel(560, 350)
 
 # OCR OFFSETS
 OCR_BOSS = OCRBox(800 - 23, 500 - 198, 890 - 23, 522 - 198)
@@ -420,6 +431,8 @@ EM_RICHD_BOX = Pixel(860, 450)
 
 EM_RICHA_BUY = Pixel(700, 490)
 EM_RICHD_BUY = Pixel(860, 490)
+
+EM_BUY_ALL_CUSTOM = Pixel(400, 200)
 
 # INFO
 INFO = Pixel(100, 542)

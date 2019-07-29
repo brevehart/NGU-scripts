@@ -25,7 +25,13 @@ class Features(Navigation, Inputs):
         """Go to fight and read current boss number."""
         self.menu("fight")
         boss = self.ocr(*coords.OCR_BOSS, debug=False)
-        return int(self.remove_letters(boss))
+        time.sleep(userset.SHORT_SLEEP)
+        boss2 = self.remove_letters(boss)
+        try:
+            return int(boss2)
+        except ValueError:
+            print(f"Couldn't convert boss number to int: {boss2}, {boss}")
+            return 0
 
     def nuke(self, boss=None):
         """Navigate to Fight Boss and Nuke or Fast Fight."""
@@ -140,7 +146,7 @@ class Features(Navigation, Inputs):
                 max_zone = float('inf')
                 next_unlock = float('inf')
                 print(f"No max zone found. Adventuring not unlocked or zone list is probably inaccurate. "
-                      f"Boss: {boss}, target zone: {zone}, titans? {skip_titans}, zones: {zlist}")
+                      f"Boss: {boss}, target zone: {zone}, skip titans? {skip_titans}, zones: {zlist}")
 
             if max_zone >= zone:
                 zone_target_reached = True
@@ -482,9 +488,9 @@ class Features(Navigation, Inputs):
         try:
             e = amount[0]
             m = amount[1]
-        except TypeError:
+        except (IndexError, TypeError):
             try:
-                e = amount
+                e = int(amount)
             except TypeError:
                 # no amount set, try to cap
                 self.click(*coords.WANDOOS_ENERGY)
@@ -815,9 +821,11 @@ class Features(Navigation, Inputs):
         """Get a list of all titans available to fight.
            Doesn't check that you can get to their zones though.
         """
-        self.menu("adventure")  # click to get tooltip, maybe we can hover instead?
+        self.menu("inventory")  # make sure we actually click adventure menu
+        self.menu("adventure")  # click to get tooltip
+        time.sleep(userset.SHORT_SLEEP)
         titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
-        #print(titans)
+        print(f"titans: {titans}")
         res = re.findall(r'^\s*(\w+)\s+SPAWN\s+READY$', titans, flags=re.M)
         print(f"Titans available: {res}")
         return res
@@ -1475,11 +1483,23 @@ class Features(Navigation, Inputs):
         self.click(*coords.BASIC_TRAINING_0_PLUS)
 
     def cap_last_basic_training(self):
-        """Clicks the cap button on basic training 5 (Ultimate Attack).
+        """Click the cap button on basic training 5 (Ultimate Attack).
            Works best with sync training option.
         """
         self.menu("basictraining")
         self.click(*coords.BASIC_TRAINING_5_CAP)
+
+    def check_feature_unlocked(self, menu_name):
+        """Check whether a feature is unlocked. Default: True if it can't tell."""
+        try:
+            cc = coords.MENU_LOCKED_ITEMS[menu_name]
+            return self.check_color_pixel(*cc)
+        except ValueError:
+            print(f"Couldn't check locked status of {menu_name}, assuming it is unlocked.")
+            return True
+        except IndexError:
+            print(f"Bad menu_name in lock check: {menu_name}. No such menu item found.")
+            return False
 
     def distribute_em(self, augments=(), limits=(), ratios=(), reclaim=True, cap_factor=0.999, auto_calculate=False,
                       max_ritual=8, report=True):
@@ -1540,6 +1560,7 @@ class Features(Navigation, Inputs):
         if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
             allocated_cap = True
             print(f"E/M cap reached (>={cap_factor*100:.1f}%).")
+            # TODO: also check that all targeted features are unlocked
         else:
             allocated_cap = False
 
@@ -1561,16 +1582,33 @@ class Features(Navigation, Inputs):
             amt = dct.get(key) * cap
             return int(min(amt, lim))  # works as long as dct values < inf
 
+        # print(coords.MENU_LOCKED_ITEMS)
+        def convert_to_menu_colpix(f):
+            """Convert feature name to menu name."""
+            # print(f"Converting feature to menu: {f}")
+            repl = {"augments": "augmentations", "advanced_training": "advtraining"}
+            m_name = repl.get(f, f).replace("_", "")  # use dictionary if possible, then strip all underscores
+            return coords.MENU_LOCKED_ITEMS.get(m_name)
+
+        locked_features = False
         for feat in rats:  # there's probably a better way
-            e_amt = 0
-            m_amt = 0
+            if self.check_pixel_color(*convert_to_menu_colpix(feat)):
+                if report:
+                    print(f"Skipping locked feature: {feat}.")
+                locked_features = True
+                continue
+            e_amt, m_amt, e_pct, m_pct = (0,) * 4
             if feat in rats_e:
                 e_amt = get_limit(feat)
+                e_pct = rats_e.get(feat)
             if feat in rats_m:
                 m_amt = get_limit(feat, magic=True)
+                m_pct = rats_m.get(feat)
             if report:
-                print(f"Distributing to {feat}, E: {e_amt}, M: {m_amt}.")
-            if feat == 'blood_magic':
+                print(f"Distributing to {feat}, E: {e_amt} ({e_pct*100:.1f}%), M: {m_amt} ({m_pct*100:.1f}%).")
+            if feat == "basic_training":
+                self.basic_training(e_amt)
+            elif feat == 'blood_magic':
                 self.blood_magic(max_ritual, amount=m_amt)
             elif feat == 'advanced_training':
                 self.advanced_training(e_amt)
@@ -1579,17 +1617,17 @@ class Features(Navigation, Inputs):
             elif feat == 'augments':
                 self.augments(augs, e_amt, allow_ocr_fail=True)
             elif feat == 'wandoos':
-                self.wandoos(True)  # probably need to cap wandoos in order for NGUs to work
-            elif feat == 'ngu':
+                self.wandoos(amount=(e_amt, m_amt))
+            elif feat == 'ngu':  # could use NGU cap all button
                 try:
-                    NGU_energy = e_amt
-                    self.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8, 9])
-                    NGU_magic = m_amt
+                    NGU_energy = self.get_em()  # dump whatever is left into ngus
+                    self.assign_ngu(NGU_energy, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+                    NGU_magic = self.get_em(magic=True)
                     self.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
                 except ValueError:
                     print("couldn't assign e/m to NGUs")
         time.sleep(0.5)
 
         if report:
-            print(f"Finished distribute_em. Cap reached: {allocated_cap}.")
-        return allocated_cap
+            print(f"Finished distribute_em. Cap reached: {allocated_cap}, Targeted features locked: {locked_features}.")
+        return allocated_cap and not locked_features
