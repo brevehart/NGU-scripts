@@ -24,6 +24,7 @@ class Features(Navigation, Inputs):
     def get_current_boss(self):
         """Go to fight and read current boss number."""
         self.menu("fight")
+        self.click(*coords.BOTTOM_RIGHT_CORNER)  # no tooltips
         boss = self.ocr(*coords.OCR_BOSS, debug=False)
         time.sleep(userset.SHORT_SLEEP)
         boss2 = self.remove_letters(boss)
@@ -149,11 +150,10 @@ class Features(Navigation, Inputs):
                       f"Boss: {boss}, target zone: {zone}, skip titans? {skip_titans}, zones: {zlist}")
 
             if max_zone >= zone:
-                zone_target_reached = True
-                max_zone = zone
+                capped_zone = zone
             else:
-                zone_target_reached = False
-            return max_zone, zone_target_reached, next_unlock
+                capped_zone = max_zone
+            return capped_zone, max_zone, next_unlock
         except ValueError:
             print("Couldn't get current boss. Ignoring zone boss unlock check.")
             return zone, False, 0
@@ -822,10 +822,13 @@ class Features(Navigation, Inputs):
            Doesn't check that you can get to their zones though.
         """
         self.menu("inventory")  # make sure we actually click adventure menu
+        self.click(*coords.BOTTOM_RIGHT_CORNER)
         self.menu("adventure")  # click to get tooltip
         time.sleep(userset.SHORT_SLEEP)
         titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
-        print(f"titans: {titans}")
+        shortest_str = "GRB SPAWN READY"  # any shorter string is probably an error (unless GRB is not unlocked)
+        if len(titans.strip()) < len(shortest_str):
+            print(f"Probable error getting titans available. OCR text: {titans}")
         res = re.findall(r'^\s*(\w+)\s+SPAWN\s+READY$', titans, flags=re.M)
         print(f"Titans available: {res}")
         return res
@@ -835,7 +838,7 @@ class Features(Navigation, Inputs):
         # implement this
         return name
 
-    def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8)):
+    def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8), report=False):
         """Fight available titans up to 'max_titan' and returns True if any were fought.
 
            Keyword arguments:
@@ -846,13 +849,13 @@ class Features(Navigation, Inputs):
         fought_titan = False
         for titan in self.titans_available():  # make sure that titans_available and kill_titan use same names
             if not check_stats or self.titan_pt_check(titan, modifiers=modifiers):
-                self.kill_titan(self.normalize_titan_name(titan))
+                self.kill_titan(self.normalize_titan_name(titan), report=report)
                 fought_titan = True
             if titan == max_titan:
                 break
         return fought_titan
 
-    def kill_titan(self, target, report=True):
+    def kill_titan(self, target, report=False):
         """Attempt to kill the target titan.
 
         Keyword arguments:
@@ -881,7 +884,7 @@ class Features(Navigation, Inputs):
                 time.sleep(0.2)  # Make sure titans spawn, otherwise loop breaks
 
             # queue = deque(self.get_ability_queue())
-            queue = deque(self.get_ability_combo(debug=report))
+            queue = deque(self.get_ability_combo(debug=False))
             if report:
                 print(f"STARTING COMBO: {queue}")
             while not (self.check_pixel_color(*coords.IS_DEAD)):  # sometimes ends combat while titan is still (barely) alive
@@ -1389,15 +1392,18 @@ class Features(Navigation, Inputs):
 
                         return
 
-    def get_rebirth_time(self):
+    def get_rebirth_time(self, debug=False):
         """Get the current rebirth time.
 
         returns a namedtuple(days, timestamp) where days is the number
         of days displayed in the rebirth time text and timestamp is a
         time.time_struct object.
         """
+        self.click(*coords.BOTTOM_RIGHT_CORNER)  # no tooltips
         Rebirth_time = namedtuple('Rebirth_time', 'days timestamp')
         t = self.ocr(*coords.OCR_REBIRTH_TIME)
+        if debug:
+            print(f"Rebirth OCR: {t}")
         x = re.search(r"((?P<days>[0-9]+) days? )?((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)", t)
         days = 0
         if x is None:
@@ -1423,6 +1429,8 @@ class Features(Navigation, Inputs):
             else:
                 seconds = x.group('seconds')
             timestamp = time.strptime(f"{hours}:{minutes}:{seconds}", "%H:%M:%S")
+        if debug:
+            print(f"Rebirth days: {days}, timestamp: {timestamp}")
         return Rebirth_time(days, timestamp)
 
     def rebirth_time_to_sec(self, rebirth_time):
@@ -1502,7 +1510,7 @@ class Features(Navigation, Inputs):
             return False
 
     def distribute_em(self, augments=(), limits=(), ratios=(), reclaim=True, cap_factor=0.999, auto_calculate=False,
-                      max_ritual=8, report=True):
+                      max_ritual=8, report=False):
         """Distribute energy and magic.
 
            feature names: ["basic_training", "advanced_training", "augmentations", "time_machine", "blood_magic",
@@ -1559,8 +1567,8 @@ class Features(Navigation, Inputs):
         magic_idle = self.get_em(magic=True)
         if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
             allocated_cap = True
-            print(f"E/M cap reached (>={cap_factor*100:.1f}%).")
-            # TODO: also check that all targeted features are unlocked
+            if report:
+                print(f"E/M cap reached (>={cap_factor*100:.1f}%).")
         else:
             allocated_cap = False
 
@@ -1621,7 +1629,7 @@ class Features(Navigation, Inputs):
             elif feat == 'ngu':  # could use NGU cap all button
                 try:
                     NGU_energy = self.get_em()  # dump whatever is left into ngus
-                    self.assign_ngu(NGU_energy, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+                    self.assign_ngu(NGU_energy, [1, 2, 3, 4])
                     NGU_magic = self.get_em(magic=True)
                     self.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
                 except ValueError:

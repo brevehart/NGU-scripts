@@ -45,7 +45,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     blood_digger_active = False
     itopod_advance = False
     is_farming = False
-    allocated_cap = False
+    em_distribution_complete = False
     cap_factor = 0.999
     f.nuke()
     time.sleep(2)
@@ -57,7 +57,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     # f.snipe(0, 1, highest=True, manual=True, bosses=True, once=True)
     # time.sleep(1)
     f.loadout(2)  # Bar/power equimpent
-    #f.basic_training(100)  # Currently, need to manually adjust amount (x2) to cap basics
+    # f.basic_training(100)  # Currently, need to manually adjust amount (x2) to cap basics
     # f.adventure(itopod=True, itopodauto=True)
     # f.time_machine(1e8, magic=True)
     f.time_machine(1e5, 2e4)
@@ -70,7 +70,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     # f.augments({"MI": 0.7, "DTMT": 0.3}, 1e5)
     # f.wandoos(True)
     next_zone_unlock_boss = 0
-    zone_target_reached = False
+    max_zone = 0
     last_merge = start
     merge_interval = 120
     last_attempted_spell_cast = 0
@@ -90,11 +90,11 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 is_farming = False
 
         if time.time() > start + 90 and f_zone > 0 and not is_farming:
-            m_zone, zone_target_reached, next_zone_unlock_boss = f.get_max_adv_zone(zone=f_zone)
+            m_zone, max_zone, next_zone_unlock_boss = f.get_max_adv_zone(zone=f_zone)
             f.adventure(zone=m_zone, highest=False)
             is_farming = True
-            print(f"Farming: target zone: {f_zone}, actual: {f.get_adv_zone()}, target reached: {zone_target_reached}, "
-                  f"current boss: {f.get_current_boss()}, boss needed for next zone: {next_zone_unlock_boss+1}.")
+            print(f"Farming: target zone: {f_zone}, actual: {f.get_adv_zone()}, max zone: {max_zone}, "
+                  f"current boss: {f.get_current_boss()}, boss needed for next zone: {next_zone_unlock_boss + 1}.")
             # f.menu("adventure")
         elif time.time() > start + 90 and not itopod_advance and not is_farming:
             f.adventure(itopod=True, itopodauto=True)
@@ -108,16 +108,17 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
             f.nuke()
             f.fight()
             the_boss = f.get_current_boss()
-            if the_boss > next_zone_unlock_boss and not zone_target_reached:
+            if the_boss > next_zone_unlock_boss and f_zone > max_zone:
                 is_farming = False  # reset flag so we try to reach our target zone if boss limited
 
-            if not allocated_cap:
-                ratios = {"advanced_training": 1/3, "time_machine": (1/6, 1/4), "augments": 1/4, 'blood_magic': 1,
-                          "wandoos": 1/5, "ngu": 0.1}
+            if not em_distribution_complete:
+                ratios = {"advanced_training": 1 / 3, "time_machine": (1 / 6, 1 / 4), "augments": 1 / 4,
+                          'blood_magic': 1,
+                          "wandoos": 1 / 5, "ngu": 0.1}
                 augments = {"MI": 0.7, "DTMT": 0.3}
                 limits = {"time_machine": (4e5, 4e4)}
-                allocated_cap = f.distribute_em(max_ritual=1, ratios=ratios, augments=augments, limits=limits,
-                                                cap_factor=cap_factor)
+                em_distribution_complete = f.distribute_em(max_ritual=1, ratios=ratios, augments=augments,
+                                                           limits=limits, cap_factor=cap_factor, report=True)
                 # f.send_string("r")  # reclaim all e/m and then redistribute
                 # f.send_string("t")
                 # energy_cap = f.get_em(cap=True)
@@ -175,6 +176,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     tracker.adjustxp()
     while time.time() < end:
         time.sleep(0.1)
+    f.fight_titans()  # just in case we missed them by a few seconds
 
     return
 
@@ -215,6 +217,11 @@ print(w.x, w.y)
 
 tracker = Tracker(5)
 c = Challenge()
+
+feature.titans_available()
+print(f"max_adv_zone: {feature.get_max_adv_zone()}")
+u.buy()
+feature.get_rebirth_time(debug=True)
 
 speedrun(60, feature, rebirth=False)
 
