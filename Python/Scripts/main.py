@@ -18,14 +18,14 @@ import coordinates as coords
 import time
 
 
-def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
-    """Start a speedrun.
+def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=80):
+    """Start a speedrun. Doesn't have to be very speedy though.
 
     Keyword arguments
     duration -- duration in minutes to run
     f -- feature object
     rebirth -- True to start run with a rebirth
-    kill_titans -- True to kill titans if run lasts long enough (only GRB for now)
+    kill_titans -- True to kill titans if run lasts long enough
     farm_zone -- zone number to farm, 0 for ITOPOD
     """
 
@@ -69,11 +69,25 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     # f.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     # f.augments({"MI": 0.7, "DTMT": 0.3}, 1e5)
     # f.wandoos(True)
+
+    # settings for loop
+    maintenance_interval = 120
+    # settings for E/M distribution
+    ratios = {"advanced_training": 1 / 3, "time_machine": (1 / 6, 1 / 4), "augments": 1 / 4,
+              'blood_magic': 1, "wandoos": 1 / 5, "ngu": 0.01}
+    augments = {"SS": 0.8, "DS": 0.2}
+    limits = {"time_machine": (4e5, 4e4)}
+    max_ritual = 1
+
+    # loop constants and variables
+    ONE_HOUR = 3600  # for titans and ygg, might need to separate these after ygg perks/quirks
     next_zone_unlock_boss = 0
     max_zone = 0
-    last_merge = start
-    merge_interval = 120
+    last_maintenance = start
+    last_hour = start
     last_attempted_spell_cast = 0
+
+    # main loop
     while time.time() < end - 20:
         if time.time() > start + 40:
             try:
@@ -85,7 +99,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 print("couldn't assign e/m to NGUs")
             time.sleep(0.5)
 
-        if time.time() >= max(start + 60 * 60, last_merge + merge_interval) and kill_titans:
+        if time.time() >= max(start + ONE_HOUR, last_maintenance + maintenance_interval) and kill_titans:
             if f.fight_titans():  # fights any available titans, returns True if any were available
                 is_farming = False
 
@@ -101,7 +115,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
             itopod_advance = True
             print(f"Why are we doing ITOPOD? fz: {f_zone} {f.get_adv_zone()}, is_farming: {is_farming}")
 
-        if time.time() > last_merge + merge_interval:
+        if time.time() > last_maintenance + maintenance_interval:  # common tasks
             elapsed = time.time() - start
             percent_elapsed = int(100 * elapsed / (end - start))
             print(f"Maintenance: {int(elapsed)} seconds from rebirth start ({percent_elapsed}%).")
@@ -112,35 +126,8 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 is_farming = False  # reset flag so we try to reach our target zone if boss limited
 
             if not em_distribution_complete:
-                ratios = {"advanced_training": 1 / 3, "time_machine": (1 / 6, 1 / 4), "augments": 1 / 4,
-                          'blood_magic': 1,
-                          "wandoos": 1 / 5, "ngu": 0.1}
-                augments = {"MI": 0.7, "DTMT": 0.3}
-                limits = {"time_machine": (4e5, 4e4)}
-                em_distribution_complete = f.distribute_em(max_ritual=1, ratios=ratios, augments=augments,
+                em_distribution_complete = f.distribute_em(max_ritual=max_ritual, ratios=ratios, augments=augments,
                                                            limits=limits, cap_factor=cap_factor, report=True)
-                # f.send_string("r")  # reclaim all e/m and then redistribute
-                # f.send_string("t")
-                # energy_cap = f.get_em(cap=True)
-                # magic_cap = f.get_em(cap=True, magic=True)
-                # energy_idle = f.get_em()
-                # magic_idle = f.get_em(magic=True)
-                # if energy_idle >= cap_factor * energy_cap and magic_idle >= cap_factor * magic_cap:
-                #     allocated_cap = True
-                #     print("E/M cap reached.")
-                #
-                # f.blood_magic(1)
-                # f.advanced_training(400000)
-                # f.time_machine(2e5, 4e4)  # add checks to get current allocation or just remove before adding
-                # f.augments({"MI": 0.7, "DTMT": 0.3}, 3e5, allow_ocr_fail=True)
-                # f.wandoos(True)   # probably need to cap wandoos in order for NGUs to work
-                # try:
-                #     NGU_energy = f.get_idle_cap()
-                #     feature.assign_ngu(NGU_energy, [1, 2, 4, 5, 6, 7, 8, 9])
-                #     NGU_magic = f.get_idle_cap(magic=True)
-                #     feature.assign_ngu(NGU_magic, [1, 2, 3, 4], magic=True)
-                # except ValueError:
-                #     print("couldn't assign e/m to NGUs")
                 time.sleep(0.5)
 
             if f.check_dead_in_adv():
@@ -148,19 +135,27 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
                 is_farming = False
 
             # f.gold_diggers([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-            # f.cap_last_basic_training()  # possibly only run once at 25 min( or less with perks/quirks)
+            # f.cap_last_basic_training()  # possibly only run once at 25 min
             f.merge_boost(merge=18, boost=8, transform=2)
             spelled = False
-            if time.time() > last_attempted_spell_cast + 5 * merge_interval:  # spells are not available very frequently
+            if time.time() > last_attempted_spell_cast + 5 * maintenance_interval:  # spells are not available very frequently
                 for spell_num in feature.check_spells_ready():
                     feature.cast_spell(spell_num)  # add check for evil mode spell #3?
                     spelled = True
                     is_farming = False  # cast_spell changes farm zone to itopod
 
-            last_merge = time.time()
+            last_maintenance = time.time()
             if spelled:
                 feature.toggle_auto_spells(number=True, drop=False, gold=False)
-                last_attempted_spell_cast = last_merge
+                last_attempted_spell_cast = last_maintenance
+
+        if time.time() >= last_hour + ONE_HOUR:  # hourly tasks
+            elapsed = time.time() - start
+            percent_elapsed = int(100 * elapsed / (end - start))
+            print(f"Hourly tasks at {elapsed} seconds ({percent_elapsed:.1f}%)")
+            f.fight_titans()
+            f.ygg()
+            last_hour = time.time()
 
     print("Preparing for rebirth.")
     f.nuke()
@@ -169,14 +164,15 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=8):
     f.pit()
     f.spin()
     f.save_check()
-    f.ygg()
+    f.ygg(eat_all=True)
     f.fight_titans()
     tracker.progress()
     u.buy()
     tracker.adjustxp()
     while time.time() < end:
         time.sleep(0.1)
-    f.fight_titans()  # just in case we missed them by a few seconds
+    f.fight_titans(debug=True)  # just in case we missed them by a few seconds
+    f.ygg(eat_all=True)
 
     return
 
@@ -218,12 +214,12 @@ print(w.x, w.y)
 tracker = Tracker(5)
 c = Challenge()
 
-feature.titans_available()
+feature.titans_available(debug=True)
 print(f"max_adv_zone: {feature.get_max_adv_zone()}")
 u.buy()
 feature.get_rebirth_time(debug=True)
 
-speedrun(60, feature, rebirth=False)
+speedrun(61, feature, rebirth=False)
 
 while True:  # main loop
     # feature.questing()
@@ -238,4 +234,4 @@ while True:  # main loop
 
     # time.sleep(120)
     # c.start_challenge(9)
-    speedrun(60, feature)  # duration in minutes
+    speedrun(61, feature)  # duration in minutes

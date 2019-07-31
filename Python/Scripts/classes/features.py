@@ -21,7 +21,7 @@ class Features(Navigation, Inputs):
     current_adventure_zone = 0
     inventory_cleaned = False
 
-    def get_current_boss(self):
+    def get_current_boss(self, retries=3, trial=0):
         """Go to fight and read current boss number."""
         self.menu("fight")
         self.click(*coords.BOTTOM_RIGHT_CORNER)  # no tooltips
@@ -32,7 +32,12 @@ class Features(Navigation, Inputs):
             return int(boss2)
         except ValueError:
             print(f"Couldn't convert boss number to int: {boss2}, {boss}")
-            return 0
+            if trial < retries:
+                print(f"Retrying {retries - trial - 1} more times.")
+                time.sleep(userset.LONG_SLEEP)
+                return self.get_current_boss(retries, trial+1)
+            else:
+                return 0
 
     def nuke(self, boss=None):
         """Navigate to Fight Boss and Nuke or Fast Fight."""
@@ -817,7 +822,7 @@ class Features(Navigation, Inputs):
                   f" to kill {target}")
             return False
 
-    def titans_available(self):
+    def titans_available(self, debug=False):
         """Get a list of all titans available to fight.
            Doesn't check that you can get to their zones though.
         """
@@ -827,8 +832,10 @@ class Features(Navigation, Inputs):
         time.sleep(userset.SHORT_SLEEP)
         titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
         shortest_str = "GRB SPAWN READY"  # any shorter string is probably an error (unless GRB is not unlocked)
+        if debug:
+            print(f"Debug OCR text: {titans}")
         if len(titans.strip()) < len(shortest_str):
-            print(f"Probable error getting titans available. OCR text: {titans}")
+            print(f"Probable error getting titans available. OCR text too short: {titans}")
         res = re.findall(r'^\s*(\w+)\s+SPAWN\s+READY$', titans, flags=re.M)
         print(f"Titans available: {res}")
         return res
@@ -838,7 +845,7 @@ class Features(Navigation, Inputs):
         # implement this
         return name
 
-    def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8), report=False):
+    def fight_titans(self, max_titan=None, check_stats=True, modifiers=(0.8, 0.8), report=False, debug=False):
         """Fight available titans up to 'max_titan' and returns True if any were fought.
 
            Keyword arguments:
@@ -847,7 +854,7 @@ class Features(Navigation, Inputs):
            modifiers -- tuple (power, tough) that multiplies recommended stats
         """
         fought_titan = False
-        for titan in self.titans_available():  # make sure that titans_available and kill_titan use same names
+        for titan in self.titans_available(debug=debug):  # make sure that titans_available and kill_titan use same names
             if not check_stats or self.titan_pt_check(titan, modifiers=modifiers):
                 self.kill_titan(self.normalize_titan_name(titan), report=report)
                 fought_titan = True

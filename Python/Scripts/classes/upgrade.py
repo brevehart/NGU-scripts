@@ -59,11 +59,9 @@ class UpgradeEM(Stats):
 
         current_exp = Stats.xp
 
-        e_cost = coords.EPOWER_COST + coords.ECAP_COST * self.ecap + (
-                 coords.EBAR_COST * self.ebar)
+        e_cost = coords.EPOWER_COST + coords.ECAP_COST * self.ecap + coords.EBAR_COST * self.ebar
 
-        m_cost = coords.MPOWER_COST + coords.MCAP_COST * self.mcap + (
-                 coords.MBAR_COST * self.mbar)
+        m_cost = coords.MPOWER_COST + coords.MCAP_COST * self.mcap + coords.MBAR_COST * self.mbar
 
         total_price = m_cost + self.e2m_ratio * e_cost
 
@@ -72,7 +70,7 @@ class UpgradeEM(Stats):
 
         if total_price > current_exp:
             if self.report:
-                print("No XP Upgrade :{:^8} of {:^8}".format(self.human_format(current_exp),self.human_format(total_price)))
+                print("No XP Upgrade :{:^8} of {:^8}".format(self.human_format(current_exp), self.human_format(total_price)))
             return
 
         amount = int(current_exp // total_price)
@@ -176,7 +174,7 @@ class UpgradeAdventure(Stats):
         total_price = (coords.APOWER_COST * self.power * self.ratio)
         total_price += (coords.ATOUGHNESS_COST * self.toughness * self.ratio)
         total_price += (coords.AHEALTH_COST * self.health * 10)
-        total_price += math.floor(coords.AREGEN_COST * self.regen / 10)
+        total_price += coords.AREGEN_COST * math.floor(self.regen / 10)
 
         """Skip upgrading if we don't have enough exp to buy at least one
         complete set of upgrades, in order to maintain our perfect ratios :)"""
