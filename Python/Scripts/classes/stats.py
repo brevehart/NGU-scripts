@@ -29,7 +29,7 @@ class Stats(Navigation):
                 # print("OCR Captured Current XP: {:,}".format(Stats.xp))
             elif value == "PP":
                 self.perks()
-                self.click(*coords.BOTTOM_RIGHT_CORNER) # ensure no tooltips interfere
+                self.click(*coords.NOTHING) # ensure no tooltips interfere
                 Stats.pp = self.ocr_number(*coords.OCR_PP)
                 # print("OCR Captured Current PP: {:,}".format(Stats.pp))
             Stats.OCR_failed = False

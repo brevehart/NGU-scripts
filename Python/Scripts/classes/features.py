@@ -24,7 +24,7 @@ class Features(Navigation, Inputs):
     def get_current_boss(self, retries=3, trial=0):
         """Go to fight and read current boss number."""
         self.menu("fight")
-        self.click(*coords.BOTTOM_RIGHT_CORNER)  # no tooltips
+        self.click(*coords.NOTHING)  # no tooltips
         boss = self.ocr(*coords.OCR_BOSS, debug=False)
         time.sleep(userset.SHORT_SLEEP)
         boss2 = self.remove_letters(boss)
@@ -827,7 +827,7 @@ class Features(Navigation, Inputs):
            Doesn't check that you can get to their zones though.
         """
         self.menu("inventory")  # make sure we actually click adventure menu
-        self.click(*coords.BOTTOM_RIGHT_CORNER)
+        self.click(*coords.NOTHING)
         self.menu("adventure")  # click to get tooltip
         time.sleep(userset.SHORT_SLEEP)
         titans = self.ocr(*coords.OCR_TITANS_AVAILABLE)
@@ -1406,7 +1406,7 @@ class Features(Navigation, Inputs):
         of days displayed in the rebirth time text and timestamp is a
         time.time_struct object.
         """
-        self.click(*coords.BOTTOM_RIGHT_CORNER)  # no tooltips
+        self.click(*coords.NOTHING)  # no tooltips
         Rebirth_time = namedtuple('Rebirth_time', 'days timestamp')
         t = self.ocr(*coords.OCR_REBIRTH_TIME)
         if debug:

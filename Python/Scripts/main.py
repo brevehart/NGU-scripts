@@ -152,7 +152,7 @@ def speedrun(duration, f, rebirth=True, kill_titans=True, f_zone=80):
         if time.time() >= last_hour + ONE_HOUR:  # hourly tasks
             elapsed = time.time() - start
             percent_elapsed = int(100 * elapsed / (end - start))
-            print(f"Hourly tasks at {elapsed} seconds ({percent_elapsed:.1f}%)")
+            print(f"Hourly tasks at {int(elapsed)} seconds ({percent_elapsed:.1f}%)")
             f.fight_titans()
             f.ygg()
             last_hour = time.time()
@@ -216,7 +216,6 @@ c = Challenge()
 
 feature.titans_available(debug=True)
 print(f"max_adv_zone: {feature.get_max_adv_zone()}")
-u.buy()
 feature.get_rebirth_time(debug=True)
 
 speedrun(61, feature, rebirth=False)

@@ -471,7 +471,8 @@ HACKS = {1: Pixel(570, 230), 2: Pixel(890, 230),
 HACK_PAGE_Y = 182
 HACK_PAGE = [Pixel(335, HACK_PAGE_Y), Pixel(395, HACK_PAGE_Y)]
 
-BOTTOM_RIGHT_CORNER = Pixel(957, 598)  # for clicking to remove tooltips
+NOTHING = Pixel(900, 595)  # for clicking to remove tooltips
+BOTTOM_RIGHT_CORNER = Pixel(960, 600)
 SETTINGS_MENU = Pixel(27, 540)
 SETTINGS_TIMED_TOOLTIPS_ON = Pixel(500, 220)
 SETTINGS_TIMED_TOOLTIPS_OFF = Pixel(580, 220)
